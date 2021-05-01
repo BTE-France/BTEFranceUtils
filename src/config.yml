@@ -1,0 +1,10 @@
+publicWelcomeMessage: "&6Bienvenue {player}! Tu es le joueur n\u00B0{count} \u00E0 te connecter sur BTE France!"
+
+privateWelcomeMessage:
+- "&3-------------------------------------------"
+- "&6Bienvenue sur BTE France, {player}! Si tu es nouveau, merci de lire le channel #comment-rejoindre sur Discord!"
+- " "
+- "&6Welcome to BTE France, {player}! If you are new here, please read the #how-to-join Discord channel"
+- " "
+- "&6Joueurs en ligne / Online players: &c{online}"
+- "&3-------------------------------------------"

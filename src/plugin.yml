@@ -1,0 +1,10 @@
+name: BTEFranceUtils
+author: mAxYoLo01
+version: 1.0
+main: fr.mAxYoLo01.BTEFranceUtils.Main
+description: BTE France custom plugin
+commands:
+    btefrance:
+        description: BTE France command
+    banroulette:
+        description: Ban roulette with currently connected players
