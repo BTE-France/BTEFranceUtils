@@ -1,5 +1,6 @@
 package fr.mAxYoLo01.BTEFranceUtils.commands;
 
+import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -20,7 +21,7 @@ public class BTEFranceCommand implements CommandExecutor {
 				reloadConfig(sender);
 				return true;
 			} else {
-				sender.sendMessage("§4You do not have the permission!");
+				sender.sendMessage(ChatColor.DARK_RED + "You do not have the permission!");
 				return true;
 			}
 		}
@@ -29,6 +30,10 @@ public class BTEFranceCommand implements CommandExecutor {
 	
 	private void reloadConfig(CommandSender sender) {
 		Main.instance.loadConfig();
-		sender.sendMessage("§8[§dBTEFranceUtils§8] §6Plugin reloaded!");
+		sender.sendMessage(
+				ChatColor.DARK_GRAY + "[" +
+				ChatColor.LIGHT_PURPLE + "BTEFranceUtils" +
+				ChatColor.DARK_GRAY + "] " +
+				ChatColor.GOLD + "Plugin reloaded!");
 	}
 }

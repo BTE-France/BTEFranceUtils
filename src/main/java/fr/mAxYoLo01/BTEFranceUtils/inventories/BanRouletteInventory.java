@@ -6,10 +6,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
-import org.bukkit.Bukkit;
-import org.bukkit.Material;
-import org.bukkit.OfflinePlayer;
-import org.bukkit.Sound;
+import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -123,6 +120,6 @@ public class BanRouletteInventory implements InventoryHolder {
 	
 	public void banPlayer() {
 		OfflinePlayer banned = ((SkullMeta)inventory.getItem(13).getItemMeta()).getOwningPlayer();
-		Bukkit.broadcastMessage("§4[BanRoulette] " + banned.getName() + " was chosen to get banned!");
+		Bukkit.broadcastMessage(ChatColor.DARK_RED + "[BanRoulette] " + banned.getName() + " was chosen to get banned!");
 	}
 }

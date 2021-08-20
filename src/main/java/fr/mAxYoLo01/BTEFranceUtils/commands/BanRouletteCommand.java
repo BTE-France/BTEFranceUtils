@@ -1,5 +1,6 @@
 package fr.mAxYoLo01.BTEFranceUtils.commands;
 
+import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -12,7 +13,7 @@ public class BanRouletteCommand implements CommandExecutor {
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		if (!(sender instanceof Player)) {
-			sender.sendMessage("§4Only Players!");
+			sender.sendMessage(ChatColor.DARK_RED + "Only Players!");
 			return true;
 		}
 		Player p = (Player) sender;
@@ -20,7 +21,7 @@ public class BanRouletteCommand implements CommandExecutor {
 			p.openInventory(BanRouletteInventory.getInventory(p.getUniqueId()).getInventory());
 			return true;
 		} else {
-			sender.sendMessage("§4You do not have the permission!");
+			sender.sendMessage(ChatColor.DARK_RED + "You do not have the permission!");
 			return true;
 		}		
 	}
