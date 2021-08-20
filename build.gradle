@@ -6,21 +6,42 @@ repositories {
     mavenCentral()
 
     maven {
-        url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
+        // Spigot
+        url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots'
     }
 
     maven {
+        // Chat API
         url = 'https://oss.sonatype.org/content/repositories/snapshots'
     }
 
     maven {
+        // Chat API
         url = 'https://oss.sonatype.org/content/repositories/central'
+    }
+
+    maven {
+        // WorldEdit
+        url = 'https://maven.enginehub.org/repo'
+    }
+
+    maven {
+        // DiscordSRV
+        url = 'https://nexus.scarsz.me/content/groups/public'
+    }
+
+    maven {
+        // DiscordSRV (JDA)
+        url = 'https://m2.dv8tion.net/releases'
     }
 }
 
 dependencies {
 
     implementation 'org.spigotmc:spigot-api:1.12.2-R0.1-SNAPSHOT'
+    implementation 'com.sk89q.worldedit:worldedit-core:6.1'
+    implementation 'com.sk89q.worldedit:worldedit-bukkit:6.1.5'
+    implementation 'com.discordsrv:discordsrv:1.23.0'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.7.1'
 
