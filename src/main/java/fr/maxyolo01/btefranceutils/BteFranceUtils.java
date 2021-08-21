@@ -2,7 +2,7 @@ package fr.maxyolo01.btefranceutils;
 
 import java.io.File;
 
-import fr.maxyolo01.btefranceutils.listeners.JoinEvent;
+import fr.maxyolo01.btefranceutils.listeners.JoinEventListener;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -12,7 +12,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import fr.maxyolo01.btefranceutils.commands.BTEFranceCommand;
 import fr.maxyolo01.btefranceutils.commands.BanRouletteCommand;
-import fr.maxyolo01.btefranceutils.listeners.BanRouletteEvent;
+import fr.maxyolo01.btefranceutils.listeners.BanRouletteEventListener;
 
 public class BteFranceUtils extends JavaPlugin {
 	private static BteFranceUtils instance;
@@ -27,8 +27,8 @@ public class BteFranceUtils extends JavaPlugin {
 		this.loadConfig();
 		
 		PluginManager pm = Bukkit.getServer().getPluginManager();
-		pm.registerEvents(new JoinEvent(), this);
-		pm.registerEvents(new BanRouletteEvent(), this);
+		pm.registerEvents(new JoinEventListener(), this);
+		pm.registerEvents(new BanRouletteEventListener(), this);
 		
 		this.getCommand("btefrance").setExecutor(new BTEFranceCommand());
 		this.getCommand("banroulette").setExecutor(new BanRouletteCommand());

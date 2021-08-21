@@ -8,7 +8,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 
-public class BanRouletteEvent implements Listener {
+public class BanRouletteEventListener implements Listener {
 	@EventHandler
 	public void onInteract(InventoryClickEvent e) {
 		Player p = (Player) e.getWhoClicked();

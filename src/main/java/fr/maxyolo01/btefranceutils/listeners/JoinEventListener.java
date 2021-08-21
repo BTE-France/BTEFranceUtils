@@ -11,7 +11,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 
 import fr.maxyolo01.btefranceutils.BteFranceUtils;
 
-public class JoinEvent implements Listener {
+public class JoinEventListener implements Listener {
 	@EventHandler
 	public void onJoin(PlayerJoinEvent e) {
 		Player p = e.getPlayer();
