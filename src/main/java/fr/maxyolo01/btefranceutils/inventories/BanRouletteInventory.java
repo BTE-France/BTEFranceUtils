@@ -96,7 +96,7 @@ public class BanRouletteInventory implements InventoryHolder {
 					confirmBan();
 				}
 			}
-		}.runTaskTimer(BteFranceUtils.instance, 0, 5);
+		}.runTaskTimer(BteFranceUtils.instance(), 0, 5);
 	}
 	
 	private ItemStack getHead(Player p) {

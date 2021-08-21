@@ -28,7 +28,7 @@ public class BTEFranceCommand implements CommandExecutor {
 	}
 	
 	private void reloadConfig(CommandSender sender) {
-		BteFranceUtils.instance.loadConfig();
+		BteFranceUtils.instance().loadConfig();
 		sender.sendMessage(
 				ChatColor.DARK_GRAY + "[" +
 				ChatColor.LIGHT_PURPLE + "BTEFranceUtils" +

@@ -16,10 +16,10 @@ public class JoinEvent implements Listener {
 	public void onJoin(PlayerJoinEvent e) {
 		Player p = e.getPlayer();
 		if (!p.hasPlayedBefore()) {
-			String publicMsg = BteFranceUtils.instance.config.getString("publicWelcomeMessage");
+			String publicMsg = BteFranceUtils.instance().config().getString("publicWelcomeMessage");
 			e.setJoinMessage(publicMsg.replace('&', ChatColor.COLOR_CHAR).replace("{player}", p.getName()).replace("{count}", "" + Bukkit.getOfflinePlayers().length));
 			
-			List<String> privateMsgList = BteFranceUtils.instance.config.getStringList("privateWelcomeMessage");
+			List<String> privateMsgList = BteFranceUtils.instance().config().getStringList("privateWelcomeMessage");
 			for(String msg : privateMsgList) {
 				p.sendMessage(msg.replace('&', ChatColor.COLOR_CHAR).replace("{player}", p.getName()).replace("{online}", "" + Bukkit.getOnlinePlayers().size()));
 			}

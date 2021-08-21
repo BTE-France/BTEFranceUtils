@@ -15,33 +15,43 @@ import fr.maxyolo01.btefranceutils.commands.BanRouletteCommand;
 import fr.maxyolo01.btefranceutils.listeners.BanRouletteEvent;
 
 public class BteFranceUtils extends JavaPlugin {
-	public static BteFranceUtils instance;
-	public File configFile;
-	public FileConfiguration config;
+	private static BteFranceUtils instance;
+
+	private File configFile;
+	private FileConfiguration config;
 
 	public void onEnable() {
 		instance = this;
-		getServer().getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&8[&dBTEFranceUtils&8] &ehas been &aenabled&e!"));
+		this.getServer().getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&8[&dBTEFranceUtils&8] &ehas been &aenabled&e!"));
 		
-		loadConfig();
+		this.loadConfig();
 		
 		PluginManager pm = Bukkit.getServer().getPluginManager();
 		pm.registerEvents(new JoinEvent(), this);
 		pm.registerEvents(new BanRouletteEvent(), this);
 		
-		getCommand("btefrance").setExecutor(new BTEFranceCommand());
-		getCommand("banroulette").setExecutor(new BanRouletteCommand());
+		this.getCommand("btefrance").setExecutor(new BTEFranceCommand());
+		this.getCommand("banroulette").setExecutor(new BanRouletteCommand());
 	}
 	
 	public void onDisable() {
-		getServer().getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&8[&dBTEFranceUtils&8] &ehas been &4disabled&e!"));
+		this.getServer().getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&8[&dBTEFranceUtils&8] &ehas been &4disabled&e!"));
 	}
 	
 	public void loadConfig() {
-		configFile = new File(getDataFolder(), "config.yml");
-		config = YamlConfiguration.loadConfiguration(configFile);
+		this.configFile = new File(getDataFolder(), "config.yml");
+		this.config = YamlConfiguration.loadConfiguration(this.configFile);
 		if (!configFile.exists()) {
 			saveResource("config.yml", false);
 		}
 	}
+
+	public FileConfiguration config() {
+		return this.config;
+	}
+
+	public static BteFranceUtils instance() {
+		return instance;
+	}
+
 }
