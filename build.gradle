@@ -60,6 +60,7 @@ tasks.named('test') {
 
 processResources {
     inputs.property "version", project.version
+    duplicatesStrategy = 'include'
 
     from(sourceSets.main.resources.srcDirs) {
         include 'plugin.yml'
@@ -68,6 +69,5 @@ processResources {
 
     from(sourceSets.main.resources.srcDirs) {
         exclude 'plugin.yml'
-        duplicatesStrategy = 'include'
     }
 }
