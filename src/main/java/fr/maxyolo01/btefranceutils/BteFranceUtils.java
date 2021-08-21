@@ -14,8 +14,8 @@ import fr.maxyolo01.btefranceutils.commands.BTEFranceCommand;
 import fr.maxyolo01.btefranceutils.commands.BanRouletteCommand;
 import fr.maxyolo01.btefranceutils.listeners.BanRouletteEvent;
 
-public class Main extends JavaPlugin {
-	public static Main instance;
+public class BteFranceUtils extends JavaPlugin {
+	public static BteFranceUtils instance;
 	public File configFile;
 	public FileConfiguration config;
 

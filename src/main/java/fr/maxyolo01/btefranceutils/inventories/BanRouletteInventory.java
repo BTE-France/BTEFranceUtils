@@ -15,7 +15,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import fr.maxyolo01.btefranceutils.Main;
+import fr.maxyolo01.btefranceutils.BteFranceUtils;
 
 public class BanRouletteInventory implements InventoryHolder {
 	private static HashMap<UUID, BanRouletteInventory> inventories = new HashMap<>();
@@ -96,7 +96,7 @@ public class BanRouletteInventory implements InventoryHolder {
 					confirmBan();
 				}
 			}
-		}.runTaskTimer(Main.instance, 0, 5);
+		}.runTaskTimer(BteFranceUtils.instance, 0, 5);
 	}
 	
 	private ItemStack getHead(Player p) {

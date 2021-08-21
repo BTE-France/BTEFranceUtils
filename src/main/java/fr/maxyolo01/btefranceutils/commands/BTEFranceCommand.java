@@ -1,6 +1,6 @@
 package fr.maxyolo01.btefranceutils.commands;
 
-import fr.maxyolo01.btefranceutils.Main;
+import fr.maxyolo01.btefranceutils.BteFranceUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -28,7 +28,7 @@ public class BTEFranceCommand implements CommandExecutor {
 	}
 	
 	private void reloadConfig(CommandSender sender) {
-		Main.instance.loadConfig();
+		BteFranceUtils.instance.loadConfig();
 		sender.sendMessage(
 				ChatColor.DARK_GRAY + "[" +
 				ChatColor.LIGHT_PURPLE + "BTEFranceUtils" +
