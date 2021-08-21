@@ -3,6 +3,11 @@ plugins {
     id 'eclipse'
 }
 
+sourceCompatibility = 1.8
+version = "1.0." + ('git rev-list --count HEAD'.execute().text.trim())
+group = "fr.maxyolo01"
+archivesBaseName = "BteFranceUtils"
+
 repositories {
     mavenCentral()
 
@@ -50,4 +55,19 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+
+processResources {
+    inputs.property "version", project.version
+
+    from(sourceSets.main.resources.srcDirs) {
+        include 'plugin.yml'
+        expand 'version': project.version
+    }
+
+    from(sourceSets.main.resources.srcDirs) {
+        exclude 'plugin.yml'
+        duplicatesStrategy = 'include'
+    }
 }

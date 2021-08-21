@@ -1,6 +1,6 @@
 name: BTEFranceUtils
 author: mAxYoLo01
-version: 1.0
+version: ${version}
 main: fr.maxyolo01.btefranceutils.BteFranceUtils
 description: BTE France custom plugin
 commands:
