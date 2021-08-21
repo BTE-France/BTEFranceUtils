@@ -1,12 +1,11 @@
-package fr.mAxYoLo01.BTEFranceUtils.commands;
+package fr.maxyolo01.btefranceutils.commands;
 
+import fr.maxyolo01.btefranceutils.inventories.BanRouletteInventory;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-
-import fr.mAxYoLo01.BTEFranceUtils.inventories.BanRouletteInventory;
 
 public class BanRouletteCommand implements CommandExecutor {
 	

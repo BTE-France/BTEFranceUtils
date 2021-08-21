@@ -1,4 +1,4 @@
-package fr.mAxYoLo01.BTEFranceUtils.listeners;
+package fr.maxyolo01.btefranceutils.listeners;
 
 import java.util.List;
 
@@ -9,7 +9,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 
-import fr.mAxYoLo01.BTEFranceUtils.Main;
+import fr.maxyolo01.btefranceutils.Main;
 
 public class JoinEvent implements Listener {
 	@EventHandler

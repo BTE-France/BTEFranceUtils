@@ -1,7 +1,8 @@
-package fr.mAxYoLo01.BTEFranceUtils;
+package fr.maxyolo01.btefranceutils;
 
 import java.io.File;
 
+import fr.maxyolo01.btefranceutils.listeners.JoinEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -9,10 +10,9 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import fr.mAxYoLo01.BTEFranceUtils.commands.BTEFranceCommand;
-import fr.mAxYoLo01.BTEFranceUtils.commands.BanRouletteCommand;
-import fr.mAxYoLo01.BTEFranceUtils.listeners.BanRouletteEvent;
-import fr.mAxYoLo01.BTEFranceUtils.listeners.JoinEvent;
+import fr.maxyolo01.btefranceutils.commands.BTEFranceCommand;
+import fr.maxyolo01.btefranceutils.commands.BanRouletteCommand;
+import fr.maxyolo01.btefranceutils.listeners.BanRouletteEvent;
 
 public class Main extends JavaPlugin {
 	public static Main instance;

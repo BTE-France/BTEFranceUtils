@@ -1,4 +1,4 @@
-package fr.mAxYoLo01.BTEFranceUtils.inventories;
+package fr.maxyolo01.btefranceutils.inventories;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,7 +15,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import fr.mAxYoLo01.BTEFranceUtils.Main;
+import fr.maxyolo01.btefranceutils.Main;
 
 public class BanRouletteInventory implements InventoryHolder {
 	private static HashMap<UUID, BanRouletteInventory> inventories = new HashMap<>();
