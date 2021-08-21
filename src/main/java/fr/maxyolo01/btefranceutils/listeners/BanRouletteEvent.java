@@ -1,13 +1,12 @@
-package fr.mAxYoLo01.BTEFranceUtils.listeners;
+package fr.maxyolo01.btefranceutils.listeners;
 
+import fr.maxyolo01.btefranceutils.inventories.BanRouletteInventory;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
-
-import fr.mAxYoLo01.BTEFranceUtils.inventories.BanRouletteInventory;
 
 public class BanRouletteEvent implements Listener {
 	@EventHandler

@@ -1,12 +1,11 @@
-package fr.mAxYoLo01.BTEFranceUtils.commands;
+package fr.maxyolo01.btefranceutils.commands;
 
+import fr.maxyolo01.btefranceutils.BteFranceUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-
-import fr.mAxYoLo01.BTEFranceUtils.Main;
 
 public class BTEFranceCommand implements CommandExecutor {
 
@@ -29,7 +28,7 @@ public class BTEFranceCommand implements CommandExecutor {
 	}
 	
 	private void reloadConfig(CommandSender sender) {
-		Main.instance.loadConfig();
+		BteFranceUtils.instance.loadConfig();
 		sender.sendMessage(
 				ChatColor.DARK_GRAY + "[" +
 				ChatColor.LIGHT_PURPLE + "BTEFranceUtils" +
