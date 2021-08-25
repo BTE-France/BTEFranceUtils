@@ -105,7 +105,8 @@ public class SchematicSynchronizationService {
             throw new IllegalStateException("Not running");
         }
         WorldEdit.getInstance().getEventBus().unregister(this);
-        if(!this.executor.awaitTermination(1, TimeUnit.MINUTES)) {
+        this.executor.shutdown();
+        if (!this.executor.awaitTermination(1, TimeUnit.MINUTES)) {
             BteFranceUtils.instance().getLogger().severe("Schematic service working pool took more than one minute to stop, something might be wrong!");
         }
         this.running = false;
@@ -120,8 +121,8 @@ public class SchematicSynchronizationService {
 
     @Subscribe
     public void onSchematicSaved(SchematicSavedEvent event) {
-        CompletableFuture<URL> futureEvent = CompletableFuture.supplyAsync(() -> this.linkSchematicFile(event.file()));
-        futureEvent.thenAccept(url -> {
+        CompletableFuture<URL> futureEvent = CompletableFuture.supplyAsync(() -> this.linkSchematicFile(event.file()), this.executor);
+        futureEvent.thenAcceptAsync(url -> {
             if (url == null) {
                 //TODO send error on Discord
             } else {
