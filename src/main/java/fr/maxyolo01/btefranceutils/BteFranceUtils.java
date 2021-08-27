@@ -3,6 +3,7 @@ package fr.maxyolo01.btefranceutils;
 import java.io.File;
 
 import fr.maxyolo01.btefranceutils.listeners.JoinEventListener;
+import fr.maxyolo01.btefranceutils.sync.SchematicSynchronizationService;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;

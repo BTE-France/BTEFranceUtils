@@ -8,6 +8,7 @@ import fr.maxyolo01.btefranceutils.util.formatting.ByteFormatter;
 import fr.maxyolo01.btefranceutils.util.formatting.IECByteFormatter;
 import github.scarsz.discordsrv.dependencies.jda.api.EmbedBuilder;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.TextChannel;
+import github.scarsz.discordsrv.dependencies.jda.api.requests.restaction.MessageAction;
 
 import javax.annotation.Nonnull;
 import java.io.File;
@@ -19,8 +20,11 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.UUID;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.*;
+
+import static fr.maxyolo01.btefranceutils.util.formatting.Formatting.hexString;
 
 /**
  * A service that synchronizes the world edit schematic directory with a discord channel through a directory exposed to a web server..
@@ -38,6 +42,8 @@ public class SchematicSynchronizationService {
     private boolean setup, running;
 
     private final ByteFormatter formatter = new IECByteFormatter();
+
+    private String salt = "";
 
     //TODO have that in the config
     private static final String DSCD_MSG_TITLE = "Nouvelle schematic!";
@@ -137,6 +143,10 @@ public class SchematicSynchronizationService {
         });
     }
 
+    public void setSalt(String salt) {
+        this.salt = salt;
+    }
+
     private URL linkSchematicFile(File file) {
         String prefix  = this.computeFilePrefix(file);
         File newDir = this.webDirectory.resolve(prefix).toFile();
@@ -193,8 +203,14 @@ public class SchematicSynchronizationService {
     }
 
     private String computeFilePrefix(File file) {
-        //FIXME Use a salt
-        return UUID.nameUUIDFromBytes(file.getName().getBytes(StandardCharsets.UTF_8)).toString();
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            return hexString(md.digest((this.salt + file.getName()).getBytes(StandardCharsets.UTF_8)));
+        } catch(NoSuchAlgorithmException e) {
+            BteFranceUtils.instance().getLogger().severe("How on Earth is SHA-256 not supported??");
+            e.printStackTrace();
+            return "";
+        }
     }
 
 }
