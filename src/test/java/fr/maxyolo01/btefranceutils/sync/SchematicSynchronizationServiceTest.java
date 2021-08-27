@@ -1,9 +1,18 @@
 package fr.maxyolo01.btefranceutils.sync;
 
+import com.sk89q.worldedit.Vector;
+import com.sk89q.worldedit.regions.CuboidRegion;
+import com.sk89q.worldedit.regions.Region;
+import fr.dudie.nominatim.client.JsonNominatimClient;
 import fr.maxyolo01.btefranceutils.events.worldedit.SchematicSavedEvent;
 import fr.maxyolo01.btefranceutils.test.discord.DummyTextChannel;
+import fr.maxyolo01.btefranceutils.test.worldedit.DummyLocalSession;
 import fr.maxyolo01.btefranceutils.test.worldedit.DummyPlayer;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.MessageEmbed;
+import net.buildtheearth.terraplusplus.projection.EquirectangularProjection;
+import net.buildtheearth.terraplusplus.projection.GeographicProjection;
+import net.buildtheearth.terraplusplus.projection.transform.ScaleProjectionTransform;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -31,18 +40,26 @@ public class SchematicSynchronizationServiceTest {
                 schemDir.toPath(),
                 webDir.toPath(),
                 "https://example.com/schematics",
-                channel);
+                channel,
+                this.projection(),
+                this.nominatimClient());
         service.setSalt("123");
         File schematic = schemDir.toPath().resolve("schem.schematic").toFile();
         assertTrue(schematic.createNewFile());
         this.write2k(schematic);
         service.setup();
         service.start();
-        service.onSchematicSaved(new SchematicSavedEvent(player, schematic, null));
-        Thread.sleep(1000);
+        Region region = new CuboidRegion(new Vector(4885660, -5, 235220), new Vector(4885670, 16, 235225));
+        service.onSchematicSaved(new SchematicSavedEvent(player, schematic, new DummyLocalSession(region)));
+        Thread.sleep(2000);
         assertTrue(webDir.toPath().resolve("41d82e57322fcb2adc80111ccfc50bc7e6a82d32eb9740bb4dd758248ff3ae52/schem.schematic").toFile().exists());
         assertEquals(1, channel.getEmbeds().size()) ;
         MessageEmbed embed = channel.getEmbeds().remove(0);
+        String title = embed.getTitle();
+        assertNotNull(title);
+        String description = embed.getDescription();
+        assertNotNull(description);
+        assertTrue(description.contains("Paris"));
         List<MessageEmbed.Field> fields = embed.getFields();
         assertEquals(2, fields.size());
         String valueUrl = fields.get(0).getValue();
@@ -61,6 +78,19 @@ public class SchematicSynchronizationServiceTest {
         } catch (IOException e) {
             throw new IllegalStateException();
         }
+    }
+
+    private GeographicProjection projection() {
+        // BTE projection
+        return new ScaleProjectionTransform(
+                new EquirectangularProjection(),
+                100000, 100000);
+    }
+
+    private JsonNominatimClient nominatimClient() {
+        HttpClientBuilder builder = HttpClientBuilder.create();
+        builder.setUserAgent("Bte France Minecraft plugin JUnit test");
+        return new JsonNominatimClient("https://nominatim.openstreetmap.org/", builder.build(), "smyler@mail.com");
     }
 
 }

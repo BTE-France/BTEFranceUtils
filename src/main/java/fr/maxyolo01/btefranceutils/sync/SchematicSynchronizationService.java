@@ -1,14 +1,21 @@
 package fr.maxyolo01.btefranceutils.sync;
 
+import com.sk89q.worldedit.IncompleteRegionException;
+import com.sk89q.worldedit.LocalSession;
+import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.util.eventbus.Subscribe;
+import fr.dudie.nominatim.client.NominatimClient;
+import fr.dudie.nominatim.model.Address;
+import fr.dudie.nominatim.model.Element;
 import fr.maxyolo01.btefranceutils.BteFranceUtils;
 import fr.maxyolo01.btefranceutils.events.worldedit.SchematicSavedEvent;
 import fr.maxyolo01.btefranceutils.util.formatting.ByteFormatter;
 import fr.maxyolo01.btefranceutils.util.formatting.IECByteFormatter;
 import github.scarsz.discordsrv.dependencies.jda.api.EmbedBuilder;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.TextChannel;
-import github.scarsz.discordsrv.dependencies.jda.api.requests.restaction.MessageAction;
+import net.buildtheearth.terraplusplus.projection.GeographicProjection;
+import net.buildtheearth.terraplusplus.projection.OutOfProjectionBoundsException;
 
 import javax.annotation.Nonnull;
 import java.io.File;
@@ -42,8 +49,11 @@ public class SchematicSynchronizationService {
     private boolean setup, running;
 
     private final ByteFormatter formatter = new IECByteFormatter();
+    private final GeographicProjection projection;
+    private final NominatimClient nominatim;
 
     private String salt = "";
+    private String defautPlaceName = "Unkown city";
 
     //TODO have that in the config
     private static final String DSCD_MSG_TITLE = "Nouvelle schematic!";
@@ -56,11 +66,15 @@ public class SchematicSynchronizationService {
             @Nonnull Path schematicDirectory,
             @Nonnull Path webDirectory,
             @Nonnull String urlRoot,
-            @Nonnull TextChannel channel) {
+            @Nonnull TextChannel channel,
+            @Nonnull GeographicProjection projection,
+            @Nonnull NominatimClient nominatim) {
         this.schematicDirectory = schematicDirectory;
         this.webDirectory = webDirectory;
         this.urlRoot = urlRoot;
         this.channel = channel;
+        this.projection = projection;
+        this.nominatim = nominatim;
         this.formatter.setSuffixes("O", "kiO", "MiO", "GiO", "TiO", "PiO", "EiO");
     }
 
@@ -132,19 +146,27 @@ public class SchematicSynchronizationService {
 
     @Subscribe
     public void onSchematicSaved(SchematicSavedEvent event) {
-        CompletableFuture<URL> futureEvent = CompletableFuture.supplyAsync(() -> this.linkSchematicFile(event.file()), this.executor);
-        futureEvent.thenAcceptAsync(url -> {
+        Vector selectionCenter = this.getSelectionCenter(event.session());
+        CompletableFuture<URL> urlFuture = CompletableFuture.supplyAsync(() -> this.linkSchematicFile(event.file()), this.executor);
+        CompletableFuture<String> cityFuture = selectionCenter != null ?
+                CompletableFuture.supplyAsync(() -> this.getCity(selectionCenter.getX(), selectionCenter.getZ()), this.executor) :
+                CompletableFuture.completedFuture(this.defautPlaceName);
+        urlFuture.thenAcceptBothAsync(cityFuture, (url, city) -> {
             if (url == null) {
                 //TODO send error on Discord
             } else {
                 //TODO name could have format codes ? we need to get rid of them
-                this.sendSchematicMessage(event.player().getName(), "nulle part", url, event.file().length());
+                this.sendSchematicMessage(event.player().getName(), city, url, event.file().length());
             }
-        });
+        }, this.executor);
     }
 
     public void setSalt(String salt) {
         this.salt = salt;
+    }
+
+    public void setDefautPlaceName(String name) {
+        this.defautPlaceName = name;
     }
 
     private URL linkSchematicFile(File file) {
@@ -211,6 +233,33 @@ public class SchematicSynchronizationService {
             e.printStackTrace();
             return "";
         }
+    }
+
+    private Vector getSelectionCenter(LocalSession session) {
+        try {
+            return session.getSelection(session.getSelectionWorld()).getCenter();
+        } catch (IncompleteRegionException e) {
+            return null;
+        }
+    }
+
+    private String getCity(double x, double z) {
+        try {
+            double[] lola = this.projection.toGeo(x, z);
+            Address address = this.nominatim.getAddress(lola[1], lola[0], 20);
+            Element[] elements = address.getAddressElements();
+            if (elements == null) return this.defautPlaceName;
+            for(Element element: elements) {
+                if ("city".equals(element.getKey())) {
+                    return element.getValue();
+                }
+            }
+        } catch (OutOfProjectionBoundsException silenced) {
+        } catch (Exception e) {
+            BteFranceUtils.instance().getLogger().warning("Failed to get schematic address");
+            e.printStackTrace();
+        }
+        return this.defautPlaceName;
     }
 
 }
