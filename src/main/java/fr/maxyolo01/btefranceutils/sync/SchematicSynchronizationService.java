@@ -4,6 +4,8 @@ import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.util.eventbus.Subscribe;
 import fr.maxyolo01.btefranceutils.BteFranceUtils;
 import fr.maxyolo01.btefranceutils.events.worldedit.SchematicSavedEvent;
+import fr.maxyolo01.btefranceutils.util.formatting.ByteFormatter;
+import fr.maxyolo01.btefranceutils.util.formatting.IECByteFormatter;
 import github.scarsz.discordsrv.dependencies.jda.api.EmbedBuilder;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.TextChannel;
 
@@ -35,6 +37,8 @@ public class SchematicSynchronizationService {
 
     private boolean setup, running;
 
+    private final ByteFormatter formatter = new IECByteFormatter();
+
     //TODO have that in the config
     private static final String DSCD_MSG_TITLE = "Nouvelle schematic!";
     private static final String DSCD_MSG_DESCRIPTION = "%s a créé un nouvelle schematic à %s";
@@ -51,6 +55,7 @@ public class SchematicSynchronizationService {
         this.webDirectory = webDirectory;
         this.urlRoot = urlRoot;
         this.channel = channel;
+        this.formatter.setSuffixes("O", "kiO", "MiO", "GiO", "TiO", "PiO", "EiO");
     }
 
     /**
@@ -127,7 +132,7 @@ public class SchematicSynchronizationService {
                 //TODO send error on Discord
             } else {
                 //TODO name could have format codes ? we need to get rid of them
-                this.sendSchematicMessage(event.player().getName(), "nulle part", url, 0);
+                this.sendSchematicMessage(event.player().getName(), "nulle part", url, event.file().length());
             }
         });
     }
@@ -170,12 +175,12 @@ public class SchematicSynchronizationService {
         }
     }
 
-    private void sendSchematicMessage(String playerName, String place, URL schematicURL, int size) {
+    private void sendSchematicMessage(String playerName, String place, URL schematicURL, long size) {
         EmbedBuilder builder = new EmbedBuilder();
         String description = String.format(DSCD_MSG_DESCRIPTION, playerName, place);
         builder.setTitle(DSCD_MSG_TITLE).setDescription(description).setThumbnail(DSCD_MSG_THUMBNAIL);
         builder.addField(DSCD_MSG_DOWNLOAD, schematicURL.toString(), false);
-        builder.addField(DSCD_MSG_SIZE, "" + size, true); //TODO pretty file size
+        builder.addField(DSCD_MSG_SIZE, this.formatter.format(size), true);
         builder.setColor(0x00c794);
         this.channel.sendMessage(builder.build());
     }
