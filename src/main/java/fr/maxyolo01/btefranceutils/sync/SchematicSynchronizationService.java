@@ -246,7 +246,7 @@ public class SchematicSynchronizationService {
     private String getCity(double x, double z) {
         try {
             double[] lola = this.projection.toGeo(x, z);
-            Address address = this.nominatim.getAddress(lola[1], lola[0], 20);
+            Address address = this.nominatim.getAddress(lola[0], lola[1], 20);
             Element[] elements = address.getAddressElements();
             if (elements == null) return this.defautPlaceName;
             for(Element element: elements) {

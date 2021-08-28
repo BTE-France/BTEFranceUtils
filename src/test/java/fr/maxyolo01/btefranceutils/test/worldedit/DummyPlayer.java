@@ -18,7 +18,11 @@ import java.util.UUID;
 
 public class DummyPlayer implements Player {
 
-    private String name = "DummyPlayer";
+    private String name;
+
+    public DummyPlayer(String name) {
+        this.name = name;
+    }
 
     @Override
     public World getWorld() {

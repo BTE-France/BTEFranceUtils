@@ -422,8 +422,20 @@ public class DummyTextChannel implements TextChannel {
     @NotNull
     @Override
     public synchronized MessageAction sendMessage(@NotNull MessageEmbed embed) {
-        this.embeds.add(embed);
+        synchronized (this.embeds) {
+            this.embeds.add(embed);
+            this.embeds.notify();
+        }
         return null;
+    }
+
+    public MessageEmbed waitForNextEmbed() throws InterruptedException {
+        synchronized (this.embeds) {
+            while (this.embeds.size() == 0) {
+                this.embeds.wait();
+            }
+            return this.embeds.remove(0);
+        }
     }
 
     @NotNull
