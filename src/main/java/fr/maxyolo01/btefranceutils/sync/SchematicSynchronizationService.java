@@ -7,12 +7,10 @@ import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.util.eventbus.Subscribe;
 import fr.dudie.nominatim.client.NominatimClient;
 import fr.dudie.nominatim.model.Address;
-import fr.dudie.nominatim.model.Element;
 import fr.maxyolo01.btefranceutils.BteFranceUtils;
 import fr.maxyolo01.btefranceutils.events.worldedit.SchematicSavedEvent;
-import fr.maxyolo01.btefranceutils.util.formatting.ByteFormatter;
-import fr.maxyolo01.btefranceutils.util.formatting.IECByteFormatter;
-import github.scarsz.discordsrv.dependencies.jda.api.EmbedBuilder;
+import github.scarsz.discordsrv.DiscordSRV;
+import github.scarsz.discordsrv.dependencies.jda.api.entities.MessageEmbed;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.TextChannel;
 import net.buildtheearth.terraplusplus.projection.GeographicProjection;
 import net.buildtheearth.terraplusplus.projection.OutOfProjectionBoundsException;
@@ -29,7 +27,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.UUID;
 import java.util.concurrent.*;
+import java.util.function.Function;
 
 import static fr.maxyolo01.btefranceutils.util.formatting.Formatting.hexString;
 
@@ -43,24 +43,19 @@ public class SchematicSynchronizationService {
     private final Path schematicDirectory, webDirectory;
     private final String urlRoot;
     private final TextChannel channel;
+    private final SchematicDiscordEmbedProvider messageProvider;
+    private final Function<UUID, String> discordIdResolver;
 
     private ExecutorService executor;
 
     private boolean setup, running;
 
-    private final ByteFormatter formatter = new IECByteFormatter();
     private final GeographicProjection projection;
     private final NominatimClient nominatim;
 
     private String salt = "";
-    private String defautPlaceName = "Unkown city";
 
-    //TODO have that in the config
-    private static final String DSCD_MSG_TITLE = "Nouvelle schematic!";
-    private static final String DSCD_MSG_DESCRIPTION = "%s a créé un nouvelle schematic à %s";
-    private static final String DSCD_MSG_THUMBNAIL = "https://i.imgur.com/1ZPB2Wt.png";
-    private static final String DSCD_MSG_DOWNLOAD = "Lien de téléchargement: ";
-    private static final String DSCD_MSG_SIZE = "Taille: ";
+
 
     public SchematicSynchronizationService(
             @Nonnull Path schematicDirectory,
@@ -68,14 +63,17 @@ public class SchematicSynchronizationService {
             @Nonnull String urlRoot,
             @Nonnull TextChannel channel,
             @Nonnull GeographicProjection projection,
-            @Nonnull NominatimClient nominatim) {
+            @Nonnull NominatimClient nominatim,
+            @Nonnull SchematicDiscordEmbedProvider messageProvider,
+            @Nonnull Function<UUID, String> discordIdResolver) {
         this.schematicDirectory = schematicDirectory;
         this.webDirectory = webDirectory;
         this.urlRoot = urlRoot;
         this.channel = channel;
         this.projection = projection;
         this.nominatim = nominatim;
-        this.formatter.setSuffixes("O", "kiO", "MiO", "GiO", "TiO", "PiO", "EiO");
+        this.messageProvider = messageProvider;
+        this.discordIdResolver = discordIdResolver;
     }
 
     /**
@@ -148,25 +146,18 @@ public class SchematicSynchronizationService {
     public void onSchematicSaved(SchematicSavedEvent event) {
         Vector selectionCenter = this.getSelectionCenter(event.session());
         CompletableFuture<URL> urlFuture = CompletableFuture.supplyAsync(() -> this.linkSchematicFile(event.file()), this.executor);
-        CompletableFuture<String> cityFuture = selectionCenter != null ?
-                CompletableFuture.supplyAsync(() -> this.getCity(selectionCenter.getX(), selectionCenter.getZ()), this.executor) :
-                CompletableFuture.completedFuture(this.defautPlaceName);
-        urlFuture.thenAcceptBothAsync(cityFuture, (url, city) -> {
-            if (url == null) {
-                //TODO send error on Discord
-            } else {
-                //TODO name could have format codes ? we need to get rid of them
-                this.sendSchematicMessage(event.player().getName(), city, url, event.file().length());
-            }
+        CompletableFuture<Address> cityFuture = CompletableFuture.supplyAsync(() -> this.getAddress(selectionCenter), this.executor);
+        String mcName = event.player().getName();
+        String dcName = this.discordIdResolver.apply(event.player().getUniqueId());
+        long size = event.file().length();
+        urlFuture.thenAcceptBothAsync(cityFuture, (url, address) -> {
+            MessageEmbed embed = this.messageProvider.provide(url, mcName, dcName, address, size);
+            this.channel.sendMessage(embed);
         }, this.executor);
     }
 
     public void setSalt(String salt) {
         this.salt = salt;
-    }
-
-    public void setDefautPlaceName(String name) {
-        this.defautPlaceName = name;
     }
 
     private URL linkSchematicFile(File file) {
@@ -207,16 +198,6 @@ public class SchematicSynchronizationService {
         }
     }
 
-    private void sendSchematicMessage(String playerName, String place, URL schematicURL, long size) {
-        EmbedBuilder builder = new EmbedBuilder();
-        String description = String.format(DSCD_MSG_DESCRIPTION, playerName, place);
-        builder.setTitle(DSCD_MSG_TITLE).setDescription(description).setThumbnail(DSCD_MSG_THUMBNAIL);
-        builder.addField(DSCD_MSG_DOWNLOAD, schematicURL.toString(), false);
-        builder.addField(DSCD_MSG_SIZE, this.formatter.format(size), true);
-        builder.setColor(0x00c794);
-        this.channel.sendMessage(builder.build());
-    }
-
     private static Thread makeThread(Runnable run) {
         Thread thread = new Thread(run);
         thread.setPriority(Thread.MIN_PRIORITY);
@@ -243,23 +224,20 @@ public class SchematicSynchronizationService {
         }
     }
 
-    private String getCity(double x, double z) {
-        try {
-            double[] lola = this.projection.toGeo(x, z);
-            Address address = this.nominatim.getAddress(lola[0], lola[1], 20);
-            Element[] elements = address.getAddressElements();
-            if (elements == null) return this.defautPlaceName;
-            for(Element element: elements) {
-                if ("city".equals(element.getKey())) {
-                    return element.getValue();
-                }
+    private Address getAddress(Vector place) {
+        if (place == null) {
+            return null;
+        } else {
+            try {
+                double[] lola = this.projection.toGeo(place.getX(), place.getZ());
+                return this.nominatim.getAddress(lola[0], lola[1], 20);
+            } catch (OutOfProjectionBoundsException silenced) {
+            } catch (Exception e) {
+                BteFranceUtils.instance().getLogger().warning("Failed to get schematic address");
+                e.printStackTrace();
             }
-        } catch (OutOfProjectionBoundsException silenced) {
-        } catch (Exception e) {
-            BteFranceUtils.instance().getLogger().warning("Failed to get schematic address");
-            e.printStackTrace();
         }
-        return this.defautPlaceName;
+        return null;
     }
 
 }
