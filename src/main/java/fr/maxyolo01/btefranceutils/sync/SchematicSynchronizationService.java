@@ -7,7 +7,6 @@ import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.util.eventbus.Subscribe;
 import fr.dudie.nominatim.client.NominatimClient;
 import fr.dudie.nominatim.model.Address;
-import fr.maxyolo01.btefranceutils.BteFranceUtils;
 import fr.maxyolo01.btefranceutils.events.worldedit.SchematicSavedEvent;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.MessageEmbed;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.TextChannel;
@@ -15,7 +14,6 @@ import net.buildtheearth.terraplusplus.projection.GeographicProjection;
 import net.buildtheearth.terraplusplus.projection.OutOfProjectionBoundsException;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -30,6 +28,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.function.Function;
+import java.util.logging.Logger;
 
 import static fr.maxyolo01.btefranceutils.util.formatting.Formatting.hexString;
 
@@ -48,6 +47,7 @@ public class SchematicSynchronizationService {
     private final String salt;
     private final GeographicProjection projection;
     private final NominatimClient nominatim;
+    private final Logger logger;
 
     private ExecutorService executor;
 
@@ -62,7 +62,8 @@ public class SchematicSynchronizationService {
             @Nonnull SchematicDiscordEmbedProvider messageProvider,
             @Nonnull Function<UUID, String> discordIdResolver,
             @Nonnull GeographicProjection projection,
-            @Nonnull NominatimClient nominatim) {
+            @Nonnull NominatimClient nominatim,
+            @Nonnull Logger logger) {
         this.schematicDirectory = schematicDirectory;
         this.webDirectory = webDirectory;
         this.urlRoot = urlRoot;
@@ -72,6 +73,7 @@ public class SchematicSynchronizationService {
         this.discordIdResolver = discordIdResolver;
         this.projection = projection;
         this.nominatim = nominatim;
+        this.logger = logger;
     }
 
     /**
@@ -113,6 +115,7 @@ public class SchematicSynchronizationService {
         }
         WorldEdit.getInstance().getEventBus().register(this);
         this.running = true;
+        this.logger.info("Schematic synchronization service is now running.");
     }
 
     /**
@@ -128,9 +131,11 @@ public class SchematicSynchronizationService {
         WorldEdit.getInstance().getEventBus().unregister(this);
         this.executor.shutdown();
         if (!this.executor.awaitTermination(1, TimeUnit.MINUTES)) {
-            BteFranceUtils.instance().getLogger().severe("Schematic service working pool took more than one minute to stop, something might be wrong!");
+            this.logger.severe("Schematic service working pool took more than one minute to stop, something might be wrong!");
         }
         this.running = false;
+        this.setup = false;
+        this.logger.info("Schematic synchronization has been stopped.");
     }
 
     /**
@@ -141,13 +146,14 @@ public class SchematicSynchronizationService {
     }
 
     @Subscribe
-    public void onSchematicSaved(SchematicSavedEvent event) {
+    public void onSchematicSaved(final SchematicSavedEvent event) {
         Vector selectionCenter = this.getSelectionCenter(event.session());
         CompletableFuture<URL> urlFuture = CompletableFuture.supplyAsync(() -> this.linkSchematicFile(event.file()), this.executor);
         CompletableFuture<Address> cityFuture = CompletableFuture.supplyAsync(() -> this.getAddress(selectionCenter), this.executor);
         String mcName = event.player().getName();
         String dcName = this.discordIdResolver.apply(event.player().getUniqueId());
         long size = event.file().length();
+        this.logger.fine(String.format("New schematic saved: %s by %s", event.file().getName(), mcName));
         urlFuture.thenAcceptBothAsync(cityFuture, (url, address) -> {
             MessageEmbed embed = this.messageProvider.provide(url, mcName, dcName, address, size);
             this.channel.sendMessage(embed);
@@ -162,30 +168,31 @@ public class SchematicSynchronizationService {
             String urlRoot = this.urlRoot + (this.urlRoot.endsWith("/") ? "": "/");
             url = new URL(urlRoot + newDir.getName() + "/" + URLEncoder.encode(file.getName(), StandardCharsets.UTF_8.toString()));
         } catch (MalformedURLException e) {
-            BteFranceUtils.instance().getLogger().severe("Could not get URL for file " + newDir + "/" + file.getName());
+            this.logger.severe("Could not get URL for file " + newDir + "/" + file.getName());
             e.printStackTrace();
             return null;
         } catch (UnsupportedEncodingException e) {
-            BteFranceUtils.instance().getLogger().severe("How on Earth is UTF-8 not supported ??");
+            this.logger.severe("How on Earth is UTF-8 not supported ??");
             e.printStackTrace();
             return null;
         }
         if (!newDir.exists() && !newDir.mkdir()) {
-            BteFranceUtils.instance().getLogger().severe("Failed to create a sub directory in the schematic web directory!");
+            this.logger.severe("Failed to create a sub directory in the schematic web directory!");
             return null;
         } else if (!newDir.isDirectory()){
-            BteFranceUtils.instance().getLogger().severe("Sub directory in the schematic web directory is a file!");
+            this.logger.severe("Sub directory in the schematic web directory is a file!");
             return null;
         } else if (!newDir.canWrite()){
-            BteFranceUtils.instance().getLogger().severe("Cannot write in schematic web sub directory!");
+            this.logger.severe("Cannot write in schematic web sub directory!");
             return null;
         } else {
             Path newPath = newDir.toPath().resolve(file.getName());
             try {
                 Files.createSymbolicLink(newPath, file.toPath());
+                this.logger.fine(String.format("Linked schematic file %s at %s, resulting in url %s", file, newPath, url));
                 return url;
             } catch (IOException e) {
-                BteFranceUtils.instance().getLogger().severe("Failed to create schematic symlink!");
+                this.logger.severe("Failed to create schematic symlink!");
                 e.printStackTrace();
                 return null;
             }
@@ -204,7 +211,7 @@ public class SchematicSynchronizationService {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             return hexString(md.digest((this.salt + file.getName()).getBytes(StandardCharsets.UTF_8)));
         } catch(NoSuchAlgorithmException e) {
-            BteFranceUtils.instance().getLogger().severe("How on Earth is SHA-256 not supported??");
+            this.logger.severe("How on Earth is SHA-256 not supported??");
             e.printStackTrace();
             return "";
         }
@@ -227,7 +234,7 @@ public class SchematicSynchronizationService {
                 return this.nominatim.getAddress(lola[0], lola[1], 20);
             } catch (OutOfProjectionBoundsException silenced) {
             } catch (Exception e) {
-                BteFranceUtils.instance().getLogger().warning("Failed to get schematic address");
+                this.logger.warning("Failed to get schematic address");
                 e.printStackTrace();
             }
         }
