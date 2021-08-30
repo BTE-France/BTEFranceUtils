@@ -232,7 +232,7 @@ public class SchematicSynchronizationService {
             try {
                 double[] lola = this.projection.toGeo(place.getX(), place.getZ());
                 return this.nominatim.getAddress(lola[0], lola[1], 20);
-            } catch (OutOfProjectionBoundsException silenced) {
+            } catch (OutOfProjectionBoundsException ignored) {
             } catch (Exception e) {
                 this.logger.warning("Failed to get schematic address");
                 e.printStackTrace();
