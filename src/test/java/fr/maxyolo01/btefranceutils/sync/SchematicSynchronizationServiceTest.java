@@ -7,9 +7,10 @@ import fr.dudie.nominatim.client.JsonNominatimClient;
 import fr.dudie.nominatim.client.NominatimClient;
 import fr.dudie.nominatim.model.Address;
 import fr.maxyolo01.btefranceutils.events.worldedit.SchematicSavedEvent;
+import fr.maxyolo01.btefranceutils.test.bukkit.DummyBukkitPlayer;
 import fr.maxyolo01.btefranceutils.test.discord.DummyTextChannel;
 import fr.maxyolo01.btefranceutils.test.worldedit.DummyLocalSession;
-import fr.maxyolo01.btefranceutils.test.worldedit.DummyPlayer;
+import fr.maxyolo01.btefranceutils.test.worldedit.DummyWorldEditPlayer;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.EmbedType;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.MessageEmbed;
 import net.buildtheearth.terraplusplus.projection.EquirectangularProjection;
@@ -31,6 +32,8 @@ import java.util.Collections;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -46,6 +49,8 @@ public class SchematicSynchronizationServiceTest {
     private final ConcurrentHashMap<UUID, String> discordIds = new ConcurrentHashMap<>();
     private final GeographicProjection projection;
     private final NominatimClient nominatim;
+    private final Logger logger = Logger.getLogger("Schematic synchronization test");
+    private final Lock lock = new ReentrantLock();
 
     private SchematicSynchronizationService service;
 
@@ -73,7 +78,8 @@ public class SchematicSynchronizationServiceTest {
                 this.discordIds::get,
                 this.projection,
                 this.nominatim,
-                Logger.getLogger("Schematic synchronization test"));
+                this.logger);
+        this.service.setBulkMessageDelay(10);
         this.service.setup();
         this.service.start();
     }
@@ -84,11 +90,12 @@ public class SchematicSynchronizationServiceTest {
     }
 
     @Test
-    @Timeout(value = 10)
     public void testSchematicLinks() throws IOException, InterruptedException, OutOfProjectionBoundsException {
         SchematicSavedEvent event = this.createFakeSaveEvent("DummyPlayer", "DummyPlayer#4567", "schem", 2.35220, 48.85660);
+        lock.lock();
         this.service.onSchematicSaved(event);
         TestMessageEmbed embed = (TestMessageEmbed) this.channel.waitForNextEmbed();
+        lock.unlock();
         assertTrue(this.wedDirectory.toPath().resolve("41d82e57322fcb2adc80111ccfc50bc7e6a82d32eb9740bb4dd758248ff3ae52/schem.schematic").toFile().exists());
         embed.assertUrl("https://example.com/schematics/41d82e57322fcb2adc80111ccfc50bc7e6a82d32eb9740bb4dd758248ff3ae52/schem.schematic");
         embed.assertMcPlayer("DummyPlayer");
@@ -97,9 +104,31 @@ public class SchematicSynchronizationServiceTest {
         embed.assertFileSize(2048);
     }
 
+    @Test
+    public void testBulkSchematicUpdate() throws IOException, InterruptedException {
+        final int schemCount = 1000;
+        for (int i = 0; i < schemCount; i++) {
+            this.createFakeSchematic("schemNumber" + i, 1024);
+        }
+        lock.lock();
+        this.service.processExistingSchematics(new DummyBukkitPlayer(UUID.randomUUID(), "DummyPlayer", this.logger));
+        for (int i = 0; i < schemCount; i++) {
+            TestMessageEmbed embed = (TestMessageEmbed) this.channel.waitForNextEmbed();
+            embed.assertNoMcPlayer();
+            embed.assertNoDiscordId();
+            embed.assertNoAddress();
+            embed.assertFileSize(1024);
+            URL url = embed.url;
+            assertNotNull(url);
+            String fname = url.toString().substring(31);
+            assertTrue(this.wedDirectory.toPath().resolve(fname).toFile().exists());
+        }
+        lock.unlock();
+    }
+
     private SchematicSavedEvent createFakeSaveEvent(String playerName, String discordId, String schemName, double longitude, double latitude) throws IOException, OutOfProjectionBoundsException {
         UUID uuid = UUID.randomUUID();
-        DummyPlayer player = new DummyPlayer(uuid, playerName);
+        DummyWorldEditPlayer player = new DummyWorldEditPlayer(uuid, playerName);
         if (discordId != null) {
             this.discordIds.put(uuid, discordId);
         }

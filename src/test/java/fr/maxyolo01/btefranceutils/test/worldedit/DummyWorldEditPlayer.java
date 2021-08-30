@@ -15,12 +15,12 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.UUID;
 
-public class DummyPlayer implements Player {
+public class DummyWorldEditPlayer implements Player {
 
     private final String name;
     private final UUID uuid;
 
-    public DummyPlayer(UUID uuid, String name) {
+    public DummyWorldEditPlayer(UUID uuid, String name) {
         this.name = name;
         this.uuid = uuid;
     }
