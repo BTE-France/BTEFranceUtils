@@ -9,7 +9,6 @@ import com.sk89q.worldedit.extent.inventory.BlockBag;
 import com.sk89q.worldedit.internal.cui.CUIEvent;
 import com.sk89q.worldedit.session.SessionKey;
 import com.sk89q.worldedit.util.Location;
-import com.sk89q.worldedit.util.auth.AuthorizationException;
 import com.sk89q.worldedit.world.World;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,10 +17,22 @@ import java.util.UUID;
 
 public class DummyPlayer implements Player {
 
-    private String name;
+    private final String name;
+    private final UUID uuid;
 
-    public DummyPlayer(String name) {
+    public DummyPlayer(UUID uuid, String name) {
         this.name = name;
+        this.uuid = uuid;
+    }
+
+    @Override
+    public UUID getUniqueId() {
+        return this.uuid;
+    }
+
+    @Override
+    public String getName() {
+        return this.name;
     }
 
     @Override
@@ -45,7 +56,7 @@ public class DummyPlayer implements Player {
     }
 
     @Override
-    public BaseBlock getBlockInHand() throws WorldEditException {
+    public BaseBlock getBlockInHand() {
         return null;
     }
 
@@ -65,11 +76,13 @@ public class DummyPlayer implements Player {
     }
 
     @Override
+    @Deprecated
     public void findFreePosition(WorldVector searchPos) {
 
     }
 
     @Override
+    @Deprecated
     public void setOnGround(WorldVector searchPos) {
 
     }
@@ -115,31 +128,37 @@ public class DummyPlayer implements Player {
     }
 
     @Override
+    @Deprecated
     public WorldVector getBlockIn() {
         return null;
     }
 
     @Override
+    @Deprecated
     public WorldVector getBlockOn() {
         return null;
     }
 
     @Override
+    @Deprecated
     public WorldVector getBlockTrace(int range, boolean useLastBlock) {
         return null;
     }
 
     @Override
+    @Deprecated
     public WorldVectorFace getBlockTraceFace(int range, boolean useLastBlock) {
         return null;
     }
 
     @Override
+    @Deprecated
     public WorldVector getBlockTrace(int range) {
         return null;
     }
 
     @Override
+    @Deprecated
     public WorldVector getSolidBlockTrace(int range) {
         return null;
     }
@@ -150,6 +169,7 @@ public class DummyPlayer implements Player {
     }
 
     @Override
+    @Deprecated
     public WorldVector getPosition() {
         return null;
     }
@@ -201,15 +221,6 @@ public class DummyPlayer implements Player {
     }
 
     @Override
-    public String getName() {
-        return this.name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    @Override
     public void printRaw(String msg) {
 
     }
@@ -236,7 +247,7 @@ public class DummyPlayer implements Player {
 
     @Override
     public boolean isPlayer() {
-        return false;
+        return true;
     }
 
     @Override
@@ -266,17 +277,12 @@ public class DummyPlayer implements Player {
     }
 
     @Override
-    public UUID getUniqueId() {
-        return null;
-    }
-
-    @Override
     public String[] getGroups() {
         return new String[0];
     }
 
     @Override
-    public void checkPermission(String permission) throws AuthorizationException {
+    public void checkPermission(String permission) {
 
     }
 
@@ -284,4 +290,5 @@ public class DummyPlayer implements Player {
     public boolean hasPermission(String permission) {
         return false;
     }
+
 }

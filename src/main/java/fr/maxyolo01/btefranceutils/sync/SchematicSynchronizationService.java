@@ -9,13 +9,13 @@ import fr.dudie.nominatim.client.NominatimClient;
 import fr.dudie.nominatim.model.Address;
 import fr.maxyolo01.btefranceutils.BteFranceUtils;
 import fr.maxyolo01.btefranceutils.events.worldedit.SchematicSavedEvent;
-import github.scarsz.discordsrv.DiscordSRV;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.MessageEmbed;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.TextChannel;
 import net.buildtheearth.terraplusplus.projection.GeographicProjection;
 import net.buildtheearth.terraplusplus.projection.OutOfProjectionBoundsException;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -45,35 +45,33 @@ public class SchematicSynchronizationService {
     private final TextChannel channel;
     private final SchematicDiscordEmbedProvider messageProvider;
     private final Function<UUID, String> discordIdResolver;
+    private final String salt;
+    private final GeographicProjection projection;
+    private final NominatimClient nominatim;
 
     private ExecutorService executor;
 
     private boolean setup, running;
 
-    private final GeographicProjection projection;
-    private final NominatimClient nominatim;
-
-    private String salt = "";
-
-
-
     public SchematicSynchronizationService(
             @Nonnull Path schematicDirectory,
             @Nonnull Path webDirectory,
             @Nonnull String urlRoot,
+            @Nonnull String salt,
             @Nonnull TextChannel channel,
-            @Nonnull GeographicProjection projection,
-            @Nonnull NominatimClient nominatim,
             @Nonnull SchematicDiscordEmbedProvider messageProvider,
-            @Nonnull Function<UUID, String> discordIdResolver) {
+            @Nonnull Function<UUID, String> discordIdResolver,
+            @Nonnull GeographicProjection projection,
+            @Nonnull NominatimClient nominatim) {
         this.schematicDirectory = schematicDirectory;
         this.webDirectory = webDirectory;
         this.urlRoot = urlRoot;
+        this.salt = salt;
         this.channel = channel;
-        this.projection = projection;
-        this.nominatim = nominatim;
         this.messageProvider = messageProvider;
         this.discordIdResolver = discordIdResolver;
+        this.projection = projection;
+        this.nominatim = nominatim;
     }
 
     /**
@@ -154,10 +152,6 @@ public class SchematicSynchronizationService {
             MessageEmbed embed = this.messageProvider.provide(url, mcName, dcName, address, size);
             this.channel.sendMessage(embed);
         }, this.executor);
-    }
-
-    public void setSalt(String salt) {
-        this.salt = salt;
     }
 
     private URL linkSchematicFile(File file) {
