@@ -63,8 +63,10 @@ repositories {
 dependencies {
 
     implementation 'org.spigotmc:spigot-api:1.12.2-R0.1-SNAPSHOT'
-    implementation 'com.sk89q.worldedit:worldedit-core:6.1'
-    implementation 'com.sk89q.worldedit:worldedit-bukkit:6.1.5'
+    implementation ('com.github.BTE-France:BTE-France-WorldEdit:0ad2823af5') {
+        exclude module: 'worldedit-sponge-api7.1.0'
+        exclude module: 'worldedit-forge-mc1.12.2'
+    }
     implementation 'com.discordsrv:discordsrv:1.23.0'
     implementation 'com.github.BuildTheEarth:terraplusplus:a48a5a2054f4655d230711c3c68af3ad3b476db4'
     implementation 'fr.dudie:nominatim-api:3.4'
@@ -81,6 +83,13 @@ shadowJar {
     archiveClassifier.set('')
     dependencies {
         include(dependency('fr.dudie:nominatim-api:3.4'))
+        include(dependency {
+            it.moduleGroup == 'org.apache.httpcomponents'
+                    || it.moduleGroup == 'commons-logging'
+                    || it.moduleGroup == 'com.github.filosganga'
+                    || it.moduleGroup == 'org.locationtech.jts'
+                    || it.moduleGroup == 'com.vividsolutions'
+        })
     }
 }
 

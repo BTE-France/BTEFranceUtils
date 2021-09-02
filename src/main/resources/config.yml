@@ -8,3 +8,12 @@ privateWelcomeMessage:
 - " "
 - "&6Joueurs en ligne / Online players: &c{online}"
 - "&3-------------------------------------------"
+
+schematicSync:
+  webDirectoryPath: ""
+  urlRoot: "https://example.com"
+  salt: "CHANGE_THIS_AND_KEEP_IT_SECRET"
+  channelId: 0
+  nominatimUserAgent: "BTE France Minecraft plugin"
+  nominatimEndpoint: "https://nominatim.openstreetmap.org/"
+  nominatimEmail: "example@example.com"

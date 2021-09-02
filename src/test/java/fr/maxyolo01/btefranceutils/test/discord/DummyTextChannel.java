@@ -422,11 +422,12 @@ public class DummyTextChannel implements TextChannel {
     @NotNull
     @Override
     public synchronized MessageAction sendMessage(@NotNull MessageEmbed embed) {
-        synchronized (this.embeds) {
-            this.embeds.add(embed);
-            this.embeds.notify();
-        }
-        return null;
+        return new DummyMessageAction( () -> {
+            synchronized (this.embeds) {
+                this.embeds.add(embed);
+                this.embeds.notify();
+            }
+        });
     }
 
     public MessageEmbed waitForNextEmbed() throws InterruptedException {
@@ -441,8 +442,12 @@ public class DummyTextChannel implements TextChannel {
     @NotNull
     @Override
     public synchronized MessageAction sendMessage(@NotNull Message msg) {
-        this.messages.add(msg);
-        return null;
+        return new DummyMessageAction( () -> {
+            synchronized (this.embeds) {
+                this.messages.add(msg);
+                this.messages.notify();
+            }
+        });
     }
 
     public synchronized List<MessageEmbed> getEmbeds() {

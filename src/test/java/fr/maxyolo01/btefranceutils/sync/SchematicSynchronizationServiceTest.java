@@ -1,12 +1,12 @@
 package fr.maxyolo01.btefranceutils.sync;
 
 import com.sk89q.worldedit.Vector;
+import com.sk89q.worldedit.event.platform.SchematicSavedEvent;
 import com.sk89q.worldedit.regions.CuboidRegion;
 import com.sk89q.worldedit.regions.Region;
 import fr.dudie.nominatim.client.JsonNominatimClient;
 import fr.dudie.nominatim.client.NominatimClient;
 import fr.dudie.nominatim.model.Address;
-import fr.maxyolo01.btefranceutils.events.worldedit.SchematicSavedEvent;
 import fr.maxyolo01.btefranceutils.test.bukkit.DummyBukkitPlayer;
 import fr.maxyolo01.btefranceutils.test.discord.DummyTextChannel;
 import fr.maxyolo01.btefranceutils.test.worldedit.DummyLocalSession;

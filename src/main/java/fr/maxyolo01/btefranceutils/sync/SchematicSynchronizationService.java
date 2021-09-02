@@ -4,10 +4,10 @@ import com.sk89q.worldedit.IncompleteRegionException;
 import com.sk89q.worldedit.LocalSession;
 import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.WorldEdit;
+import com.sk89q.worldedit.event.platform.SchematicSavedEvent;
 import com.sk89q.worldedit.util.eventbus.Subscribe;
 import fr.dudie.nominatim.client.NominatimClient;
 import fr.dudie.nominatim.model.Address;
-import fr.maxyolo01.btefranceutils.events.worldedit.SchematicSavedEvent;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.MessageEmbed;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.TextChannel;
 import net.buildtheearth.terraplusplus.projection.GeographicProjection;
@@ -27,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.*;
@@ -55,7 +56,6 @@ public class SchematicSynchronizationService {
     private final NominatimClient nominatim;
     private final Logger logger;
     private long messageDelay = 1000; // Time to wait between two messages when bulk sending, in ms
-
 
     private ExecutorService executor;
 
@@ -171,8 +171,14 @@ public class SchematicSynchronizationService {
         this.logger.fine(String.format("New schematic saved: %s by %s", event.file().getName(), mcName));
         urlFuture.thenAcceptBothAsync(cityFuture, (url, address) -> {
             // Send a notification on Discord
-            MessageEmbed embed = this.messageProvider.provide(url, mcName, dcName, address, size);
-            this.channel.sendMessage(embed);
+            try {
+                MessageEmbed embed = this.messageProvider.provide(url, mcName, dcName, address, size);
+                this.channel.sendMessage(embed).queue();
+                this.logger.fine("Sent Discord notification for schematic!");
+            } catch (Exception e) {
+                this.logger.severe("Failed to send Discord notification for schematic!");
+                e.printStackTrace();
+            }
         }, this.executor);
     }
 
@@ -205,7 +211,7 @@ public class SchematicSynchronizationService {
                 } else {
                     MessageEmbed embed = this.messageProvider.provide(url,  null, null, null, file.length());
                     synchronized (lock) {
-                        this.channel.sendMessage(embed);
+                        this.channel.sendMessage(embed).queue();
                         try {
                             Thread.sleep(this.messageDelay);
                         } catch (InterruptedException ignored) {}
@@ -284,7 +290,9 @@ public class SchematicSynchronizationService {
         } else {
             try {
                 double[] lola = this.projection.toGeo(place.getX(), place.getZ());
-                return this.nominatim.getAddress(lola[0], lola[1], 20);
+                Address address = this.nominatim.getAddress(lola[0], lola[1], 20);
+                this.logger.fine(String.format(Locale.US, "Successfully requested address for %s, %s, got %s", lola[1], lola[0], address.getDisplayName()));
+                return address;
             } catch (OutOfProjectionBoundsException ignored) {
             } catch (Exception e) {
                 this.logger.warning("Failed to get schematic address");
