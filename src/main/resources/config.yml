@@ -17,3 +17,20 @@ schematicSync:
   nominatimUserAgent: "BTE France Minecraft plugin"
   nominatimEndpoint: "https://nominatim.openstreetmap.org/"
   nominatimEmail: "example@example.com"
+  thumbnail: "https://i.imgur.com/1ZPB2Wt.png"
+  embed:
+    title: "New schematic!"
+    description: "{user} created a new schematic!"
+    fields:
+      url:
+        name: "Download link:"
+        pattern: "{url}"
+        inline: false
+      address:
+        name: "Address:"
+        pattern: "{address}"
+        inline: false
+      size:
+        name: "File size:"
+        pattern: "{size}"
+        inline: true

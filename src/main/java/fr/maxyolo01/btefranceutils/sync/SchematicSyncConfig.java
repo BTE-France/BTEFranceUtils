@@ -13,7 +13,6 @@ import github.scarsz.discordsrv.DiscordSRV;
 import github.scarsz.discordsrv.dependencies.jda.api.EmbedBuilder;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.MessageEmbed;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.TextChannel;
-import github.scarsz.discordsrv.util.DiscordUtil;
 import net.buildtheearth.terraplusplus.generator.EarthGeneratorSettings;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.bukkit.configuration.ConfigurationSection;
@@ -28,13 +27,6 @@ import java.util.logging.Logger;
 public class SchematicSyncConfig {
 
     private final ConfigurationSection section;
-
-    //TODO have that in the config
-    private static final String DSCD_MSG_TITLE = "Nouvelle schematic!";
-    private static final String DSCD_MSG_DESCRIPTION = "%s a créé un nouvelle schematic à %s";
-    private static final String DSCD_MSG_THUMBNAIL = "https://i.imgur.com/1ZPB2Wt.png";
-    private static final String DSCD_MSG_DOWNLOAD = "Lien de téléchargement: ";
-    private static final String DSCD_MSG_SIZE = "Taille: ";
 
     private final ByteFormatter formatter = new IECByteFormatter();
 
@@ -89,11 +81,62 @@ public class SchematicSyncConfig {
 
     public MessageEmbed makeEmbed(@Nullable URL schematicUrl, @Nullable String mcPlayerName, @Nullable String discordUserName, @Nullable Address address, long fileSize) {
         EmbedBuilder builder = new EmbedBuilder();
-        String description = String.format(DSCD_MSG_DESCRIPTION, mcPlayerName, address.getDisplayName());
-        builder.setTitle(DSCD_MSG_TITLE).setDescription(description).setThumbnail(DSCD_MSG_THUMBNAIL);
-        builder.addField(DSCD_MSG_DOWNLOAD, schematicUrl.toString(), false);
-        builder.addField(DSCD_MSG_SIZE, this.formatter.format(fileSize), true);
-        builder.setColor(0x00c794);
+        String thumbnailUrl = this.section.getString("thumbnail");
+        if (thumbnailUrl != null) builder.setThumbnail(thumbnailUrl);
+        if (schematicUrl == null) {
+            ConfigurationSection errorSection = this.section.getConfigurationSection("errorEmbed");
+            builder.setTitle(errorSection.getString("title", "Error"));
+            builder.setDescription(errorSection.getString("description", "There was an error when linking a new schematic"));
+            builder.setColor(0xFF0000);
+        } else {
+            ConfigurationSection section = this.section.getConfigurationSection("embed");
+            builder.setTitle(section.getString("title", "New schematic"));
+            String desc = section.getString("description", "Someone created a new schematic!");
+            desc = desc.replace("{url}", schematicUrl.toString());
+            if (discordUserName != null) {
+                builder.setDescription(desc.replace("{user}", "<@" + discordUserName + ">"));
+            } else if (mcPlayerName != null) {
+                builder.setDescription(desc.replace("{user}", mcPlayerName));
+            } else if (!desc.contains("{user}")) {
+                builder.setDescription(desc);
+            }
+
+            builder.setColor(0x00c794);
+
+            ConfigurationSection fields = section.getConfigurationSection("fields");
+            for (String key: fields.getKeys(false)) {
+                ConfigurationSection fieldSection = fields.getConfigurationSection(key);
+                String name = fieldSection.getString("name", "Field name:");
+                String pattern = fieldSection.getString("pattern", "Some stuff");
+                boolean inline = fieldSection.getBoolean("inline", false);
+                if (pattern.contains("{user}")) {
+                    if (discordUserName != null) {
+                        pattern = pattern.replace("{user}", discordUserName);
+                    } else if (mcPlayerName != null) {
+                        pattern = pattern.replace("{user}", mcPlayerName);
+                    } else {
+                        continue;
+                    }
+                }
+                if (pattern.contains("{address}")) {
+                    String adr;
+                    if (address != null && (adr = address.getDisplayName()) != null) {
+                        pattern = pattern.replace("{address}", adr);
+                    } else {
+                        continue;
+                    }
+                }
+                pattern = pattern.replace("{url}", schematicUrl.toString());
+                if (pattern.contains("{size}")) {
+                    if (discordUserName != null) {
+                        pattern = pattern.replace("{size}", this.formatter.format(fileSize));
+                    } else {
+                        continue;
+                    }
+                }
+                builder.addField(name, pattern, inline);
+            }
+        }
         return builder.build();
     }
 

@@ -63,7 +63,7 @@ repositories {
 dependencies {
 
     implementation 'org.spigotmc:spigot-api:1.12.2-R0.1-SNAPSHOT'
-    implementation ('com.github.BTE-France:BTE-France-WorldEdit:0ad2823af5') {
+    implementation ('com.github.BTE-France:BTE-France-WorldEdit:2eb559cd14') {
         exclude module: 'worldedit-sponge-api7.1.0'
         exclude module: 'worldedit-forge-mc1.12.2'
     }
