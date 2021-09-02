@@ -9,3 +9,5 @@ commands:
         description: BTE France command
     banroulette:
         description: Ban roulette with currently connected players
+    syncschems:
+        description: Synchronize already existing schematics with Discord

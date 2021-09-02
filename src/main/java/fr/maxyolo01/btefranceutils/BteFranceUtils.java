@@ -3,6 +3,7 @@ package fr.maxyolo01.btefranceutils;
 import java.io.File;
 import java.io.IOException;
 
+import fr.maxyolo01.btefranceutils.commands.SyncSchematicsCommand;
 import fr.maxyolo01.btefranceutils.listeners.JoinEventListener;
 import fr.maxyolo01.btefranceutils.sync.SchematicSyncConfig;
 import fr.maxyolo01.btefranceutils.sync.SchematicSynchronizationService;
@@ -35,6 +36,7 @@ public class BteFranceUtils extends JavaPlugin {
 		
 		this.getCommand("btefrance").setExecutor(new BTEFranceCommand());
 		this.getCommand("banroulette").setExecutor(new BanRouletteCommand());
+		this.getCommand("syncschems").setExecutor(new SyncSchematicsCommand());
 
 		DiscordSRV.api.subscribe(this);
 		this.getServer().getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&8[&dBTEFranceUtils&8] &ehas been &aenabled&e!"));
@@ -60,7 +62,6 @@ public class BteFranceUtils extends JavaPlugin {
 	}
 	
 	public void onDisable() {
-		this.getServer().getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&8[&dBTEFranceUtils&8] &ehas been &4disabled&e!"));
 		if (this.schematicSyncService != null && this.schematicSyncService.isRunning()) {
 			try {
 				this.schematicSyncService.stop();
@@ -69,6 +70,7 @@ public class BteFranceUtils extends JavaPlugin {
 				e.printStackTrace();
 			}
 		}
+		this.getServer().getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&8[&dBTEFranceUtils&8] &ehas been &4disabled&e!"));
 	}
 	
 	public void loadConfig() {
@@ -85,6 +87,10 @@ public class BteFranceUtils extends JavaPlugin {
 
 	public static BteFranceUtils instance() {
 		return instance;
+	}
+
+	public SchematicSynchronizationService schematicSynchronizationService() {
+		return this.schematicSyncService;
 	}
 
 }
