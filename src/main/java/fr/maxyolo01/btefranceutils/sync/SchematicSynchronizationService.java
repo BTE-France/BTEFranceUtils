@@ -46,7 +46,7 @@ import static fr.maxyolo01.btefranceutils.util.formatting.Formatting.hexString;
  */
 public class SchematicSynchronizationService {
 
-    private final Path schematicDirectory, webDirectory;
+    private final Path schematicDirectory, webDirectory, symlinkRoot;
     private final String urlRoot;
     private final TextChannel channel;
     private final SchematicDiscordEmbedProvider messageProvider;
@@ -64,6 +64,7 @@ public class SchematicSynchronizationService {
     public SchematicSynchronizationService(
             @Nonnull Path schematicDirectory,
             @Nonnull Path webDirectory,
+            @Nonnull Path symlinkRoot,
             @Nonnull String urlRoot,
             @Nonnull String salt,
             @Nonnull TextChannel channel,
@@ -74,6 +75,7 @@ public class SchematicSynchronizationService {
             @Nonnull Logger logger) {
         this.schematicDirectory = schematicDirectory;
         this.webDirectory = webDirectory;
+        this.symlinkRoot = symlinkRoot;
         this.urlRoot = urlRoot;
         this.salt = salt;
         this.channel = channel;
@@ -102,9 +104,9 @@ public class SchematicSynchronizationService {
             throw new IOException("Web directory did not exist.");
         } else if (!webDir.isDirectory()) {
             throw new IOException("Web directory path is not a directory");
-        } else if (!webDir.canWrite()) {
+        } /*else if (!webDir.canWrite()) {
             throw new IOException("Missing required write permission for the web directory");
-        }
+        }*/
         this.executor = Executors.newFixedThreadPool(2, SchematicSynchronizationService::makeThread);
         this.setup = true;
     }
@@ -251,10 +253,11 @@ public class SchematicSynchronizationService {
             this.logger.severe("Cannot write in schematic web sub directory!");
             return null;
         } else {
-            Path newPath = webSubDir.toPath().resolve(file.getName());
+            Path linkPath = webSubDir.toPath().resolve(file.getName());
+            Path targetPath = this.symlinkRoot.resolve(file.getName());
             try {
-                Files.createSymbolicLink(newPath, file.toPath());
-                this.logger.fine(String.format("Linked schematic file %s at %s, resulting in url %s", file, newPath, url));
+                Files.createSymbolicLink(linkPath, targetPath);
+                this.logger.fine(String.format("Linked schematic file %s at %s, resulting in url %s", file, targetPath, url));
                 return url;
             } catch (IOException e) {
                 this.logger.severe("Failed to create schematic symlink!");

@@ -48,6 +48,13 @@ public class SchematicSyncConfig {
         } catch (InvalidPathException e) {
             throw new InvalidSchematicSyncConfigException("Invalid web directory path");
         }
+        String symlinkPath = this.section.getString("symlinkPath");
+        Path symlinkRoot;
+        if (symlinkPath == null) {
+            symlinkRoot = schemDir;
+        } else {
+            symlinkRoot = new File(symlinkPath).toPath();
+        }
         String urlRoot = this.section.getString("urlRoot");
         if (urlRoot == null) throw new InvalidSchematicSyncConfigException("Missing url root");
         String salt = this.section.getString("salt");
@@ -69,6 +76,7 @@ public class SchematicSyncConfig {
         return new SchematicSynchronizationService(
                 schemDir,
                 webDir,
+                symlinkRoot,
                 urlRoot,
                 salt,
                 channel,
@@ -85,57 +93,64 @@ public class SchematicSyncConfig {
         if (thumbnailUrl != null) builder.setThumbnail(thumbnailUrl);
         if (schematicUrl == null) {
             ConfigurationSection errorSection = this.section.getConfigurationSection("errorEmbed");
-            builder.setTitle(errorSection.getString("title", "Error"));
-            builder.setDescription(errorSection.getString("description", "There was an error when linking a new schematic"));
+            if (errorSection != null) {
+                builder.setTitle(errorSection.getString("title", "Error"));
+                builder.setDescription(errorSection.getString("description", "There was an error when linking a new schematic"));
+            } else {
+                builder.setTitle("Error");
+            }
             builder.setColor(0xFF0000);
         } else {
             ConfigurationSection section = this.section.getConfigurationSection("embed");
-            builder.setTitle(section.getString("title", "New schematic"));
-            String desc = section.getString("description", "Someone created a new schematic!");
-            desc = desc.replace("{url}", schematicUrl.toString());
-            if (discordUserName != null) {
-                builder.setDescription(desc.replace("{user}", "<@" + discordUserName + ">"));
-            } else if (mcPlayerName != null) {
-                builder.setDescription(desc.replace("{user}", mcPlayerName));
-            } else if (!desc.contains("{user}")) {
-                builder.setDescription(desc);
-            }
+            if (section != null) {
+                builder.setTitle(section.getString("title", "New schematic"));
+                String desc = section.getString("description", "Someone created a new schematic!");
+                desc = desc.replace("{url}", schematicUrl.toString());
+                if (discordUserName != null) {
+                    builder.setDescription(desc.replace("{user}", "<@" + discordUserName + ">"));
+                } else if (mcPlayerName != null) {
+                    builder.setDescription(desc.replace("{user}", mcPlayerName));
+                } else if (!desc.contains("{user}")) {
+                    builder.setDescription(desc);
+                }
 
+                ConfigurationSection fields = section.getConfigurationSection("fields");
+                for (String key : fields.getKeys(false)) {
+                    ConfigurationSection fieldSection = fields.getConfigurationSection(key);
+                    String name = fieldSection.getString("name", "Field name:");
+                    String pattern = fieldSection.getString("pattern", "Some stuff");
+                    boolean inline = fieldSection.getBoolean("inline", false);
+                    if (pattern.contains("{user}")) {
+                        if (discordUserName != null) {
+                            pattern = pattern.replace("{user}", discordUserName);
+                        } else if (mcPlayerName != null) {
+                            pattern = pattern.replace("{user}", mcPlayerName);
+                        } else {
+                            continue;
+                        }
+                    }
+                    if (pattern.contains("{address}")) {
+                        String adr;
+                        if (address != null && (adr = address.getDisplayName()) != null) {
+                            pattern = pattern.replace("{address}", adr);
+                        } else {
+                            continue;
+                        }
+                    }
+                    pattern = pattern.replace("{url}", schematicUrl.toString());
+                    if (pattern.contains("{size}")) {
+                        if (discordUserName != null) {
+                            pattern = pattern.replace("{size}", this.formatter.format(fileSize));
+                        } else {
+                            continue;
+                        }
+                    }
+                    builder.addField(name, pattern, inline);
+                }
+            } else {
+                builder.setTitle("Missing config section");
+            }
             builder.setColor(0x00c794);
-
-            ConfigurationSection fields = section.getConfigurationSection("fields");
-            for (String key: fields.getKeys(false)) {
-                ConfigurationSection fieldSection = fields.getConfigurationSection(key);
-                String name = fieldSection.getString("name", "Field name:");
-                String pattern = fieldSection.getString("pattern", "Some stuff");
-                boolean inline = fieldSection.getBoolean("inline", false);
-                if (pattern.contains("{user}")) {
-                    if (discordUserName != null) {
-                        pattern = pattern.replace("{user}", discordUserName);
-                    } else if (mcPlayerName != null) {
-                        pattern = pattern.replace("{user}", mcPlayerName);
-                    } else {
-                        continue;
-                    }
-                }
-                if (pattern.contains("{address}")) {
-                    String adr;
-                    if (address != null && (adr = address.getDisplayName()) != null) {
-                        pattern = pattern.replace("{address}", adr);
-                    } else {
-                        continue;
-                    }
-                }
-                pattern = pattern.replace("{url}", schematicUrl.toString());
-                if (pattern.contains("{size}")) {
-                    if (discordUserName != null) {
-                        pattern = pattern.replace("{size}", this.formatter.format(fileSize));
-                    } else {
-                        continue;
-                    }
-                }
-                builder.addField(name, pattern, inline);
-            }
         }
         return builder.build();
     }

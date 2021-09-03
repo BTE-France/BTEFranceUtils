@@ -71,6 +71,7 @@ public class SchematicSynchronizationServiceTest {
         this.service = new SchematicSynchronizationService(
                 this.schematicDirectory.toPath(),
                 this.wedDirectory.toPath(),
+                this.schematicDirectory.toPath(),
                 "https://example.com/schematics",
                 "123",
                 this.channel,
@@ -90,6 +91,7 @@ public class SchematicSynchronizationServiceTest {
     }
 
     @Test
+    @Timeout(60)
     public void testSchematicLinks() throws IOException, InterruptedException, OutOfProjectionBoundsException {
         SchematicSavedEvent event = this.createFakeSaveEvent("DummyPlayer", "DummyPlayer#4567", "schem", 2.35220, 48.85660);
         lock.lock();
@@ -105,6 +107,7 @@ public class SchematicSynchronizationServiceTest {
     }
 
     @Test
+    @Timeout(60)
     public void testBulkSchematicUpdate() throws IOException, InterruptedException {
         final int schemCount = 1000;
         for (int i = 0; i < schemCount; i++) {
