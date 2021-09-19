@@ -115,7 +115,11 @@ public class SchematicSyncConfig {
                 builder.setDescription(desc);
             for (Field field: this.fields) {
                 String formatted = field.getFormattedValue(data);
-                if (formatted != null) builder.addField(field.name, formatted, field.inLine);
+                if (formatted != null) {
+                    builder.addField(field.name, formatted, field.inLine);
+                } else if (field.required) {
+                    return this.errorEmbed;
+                }
             }
             return builder.build();
         } catch (Exception e) {
@@ -216,12 +220,13 @@ public class SchematicSyncConfig {
         String name;
         List<String> patterns;
         boolean inLine;
-        //TODO required option
+        boolean required;
 
         Field(ConfigurationSection section) {
             this.name = section.getString("name");
             this.patterns = section.getStringList("patterns");
             this.inLine = section.getBoolean("inline");
+            this.required = section.getBoolean("required", false);
         }
 
         private String formatValue(String formatString, SchematicDiscordEmbedProvider.SchematicEmbedData data) {

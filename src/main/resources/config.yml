@@ -26,12 +26,14 @@ schematicSync:
       - "{userName} saved a new schematic in {city}!"
       - "{userName} saved a new schematic!"
       - "A new schematic has been saved!"
+      required: true
     fields:
       url:
         name: "Download link:"
         patterns:
         - "{url}"
         inline: false
+        required: true
       address:
         name: "Address:"
         patterns:
