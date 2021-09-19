@@ -45,7 +45,7 @@ public class BteFranceUtils extends JavaPlugin {
 
 	@github.scarsz.discordsrv.api.Subscribe
 	public void discordReadyEvent(DiscordReadyEvent event) {
-		SchematicSyncConfig syncConfig = new SchematicSyncConfig(this.config.getConfigurationSection("schematicSync"));
+		SchematicSyncConfig syncConfig = new SchematicSyncConfig(this.config.getConfigurationSection("schematicSync"), this.getLogger());
 		try {
 			this.schematicSyncService = syncConfig.makeService();
 			this.schematicSyncService.setup();

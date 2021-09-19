@@ -1,0 +1,28 @@
+embed:
+  thumbnail: "https://example.com/logo.png"
+  title: "Test title"
+  description:
+    patterns:
+    - "Test description: {url}, {playerName}, {minecraftName}, {discordName}, {size}, {address}"
+    - "Test description: {url}, {playerName}, {minecraftName}, {discordName}, {size}"
+    - "Test description: {url}, {playerName}, {minecraftName}, {discordName}"
+    - "Test description: {url}, {playerName}, {minecraftName}"
+    - "Test description: {url}, {playerName}"
+    - "Test description: {url}"
+    - "Test description"
+  fields:
+    url:
+      name: "Download link:"
+      patterns:
+      - "{url}"
+      inline: false
+    address:
+      name: "Address:"
+      patterns:
+      - "{address}"
+      inline: false
+    size:
+      name: "File size:"
+      patterns:
+      - "{size}"
+      inline: true

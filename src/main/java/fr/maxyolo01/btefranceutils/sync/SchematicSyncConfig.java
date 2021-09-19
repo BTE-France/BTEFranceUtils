@@ -5,7 +5,6 @@ import com.sk89q.worldedit.WorldEdit;
 import fr.dudie.nominatim.client.JsonNominatimClient;
 import fr.dudie.nominatim.client.NominatimClient;
 import fr.dudie.nominatim.model.Address;
-import fr.maxyolo01.btefranceutils.BteFranceUtils;
 import fr.maxyolo01.btefranceutils.util.formatting.ByteFormatter;
 
 import fr.maxyolo01.btefranceutils.util.formatting.IECByteFormatter;
@@ -14,29 +13,46 @@ import github.scarsz.discordsrv.dependencies.jda.api.EmbedBuilder;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.MessageEmbed;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.TextChannel;
 import net.buildtheearth.terraplusplus.generator.EarthGeneratorSettings;
+import net.dv8tion.jda.api.utils.MarkdownSanitizer;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.bukkit.configuration.ConfigurationSection;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.net.URL;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 public class SchematicSyncConfig {
 
     private final ConfigurationSection section;
 
     private final ByteFormatter formatter = new IECByteFormatter();
+    private final Map<String, Function<SchematicDiscordEmbedProvider.SchematicEmbedData, String>> placeholders = new HashMap<>();
+    private final List<Field> fields = new ArrayList<>();
+    private String thumbnailUrl;
+    private String title;
+    private Field description;
+    private int color;
+    private MessageEmbed errorEmbed;
 
-    public SchematicSyncConfig(ConfigurationSection section) {
+    private final Logger logger;
+
+    public SchematicSyncConfig(ConfigurationSection section, Logger logger) {
         this.formatter.setSuffixes("O", "kiO", "MiO", "GiO", "TiO", "PiO", "EiO");
         this.section = section;
+        this.logger = logger;
+        this.setupPlaceholders();
+        this.readMessageConfig();
     }
 
     public SchematicSynchronizationService makeService() throws InvalidSchematicSyncConfigException{
-        Logger logger = BteFranceUtils.instance().getLogger();
         WorldEdit worldEdit = WorldEdit.getInstance();
         LocalConfiguration worldEditConfig = worldEdit.getConfiguration();
         Path schemDir = worldEdit.getWorkingDirectoryFile(worldEditConfig.saveDir).toPath();
@@ -84,77 +100,134 @@ public class SchematicSyncConfig {
                 discordSrv.getAccountLinkManager()::getDiscordId,
                 bteSettings.projection(),
                 nominatim,
-                logger);
+                this.logger);
     }
 
-    public MessageEmbed makeEmbed(@Nullable URL schematicUrl, @Nullable String mcPlayerName, @Nullable String discordUserName, @Nullable Address address, long fileSize) {
-        EmbedBuilder builder = new EmbedBuilder();
-        String thumbnailUrl = this.section.getString("thumbnail");
-        if (thumbnailUrl != null) builder.setThumbnail(thumbnailUrl);
-        if (schematicUrl == null) {
-            ConfigurationSection errorSection = this.section.getConfigurationSection("errorEmbed");
-            if (errorSection != null) {
-                builder.setTitle(errorSection.getString("title", "Error"));
-                builder.setDescription(errorSection.getString("description", "There was an error when linking a new schematic"));
-            } else {
-                builder.setTitle("Error");
+    public MessageEmbed makeEmbed(SchematicDiscordEmbedProvider.SchematicEmbedData data) {
+        try {
+            EmbedBuilder builder = new EmbedBuilder();
+            if (this.color >= 0) builder.setColor(this.color);
+            if (this.title != null) builder.setTitle(this.title);
+            if (this.thumbnailUrl != null) builder.setThumbnail(this.thumbnailUrl);
+            String desc;
+            if (this.description != null && (desc = this.description.getFormattedValue(data)) != null)
+                builder.setDescription(desc);
+            for (Field field: this.fields) {
+                String formatted = field.getFormattedValue(data);
+                if (formatted != null) builder.addField(field.name, formatted, field.inLine);
             }
-            builder.setColor(0xFF0000);
-        } else {
-            ConfigurationSection section = this.section.getConfigurationSection("embed");
-            if (section != null) {
-                builder.setTitle(section.getString("title", "New schematic"));
-                String desc = section.getString("description", "Someone created a new schematic!");
-                desc = desc.replace("{url}", schematicUrl.toString());
-                if (discordUserName != null) {
-                    builder.setDescription(desc.replace("{user}", "<@" + discordUserName + ">"));
-                } else if (mcPlayerName != null) {
-                    builder.setDescription(desc.replace("{user}", mcPlayerName));
-                } else if (!desc.contains("{user}")) {
-                    builder.setDescription(desc);
-                }
-
-                ConfigurationSection fields = section.getConfigurationSection("fields");
-                for (String key : fields.getKeys(false)) {
-                    ConfigurationSection fieldSection = fields.getConfigurationSection(key);
-                    String name = fieldSection.getString("name", "Field name:");
-                    String pattern = fieldSection.getString("pattern", "Some stuff");
-                    boolean inline = fieldSection.getBoolean("inline", false);
-                    if (pattern.contains("{user}")) {
-                        if (discordUserName != null) {
-                            pattern = pattern.replace("{user}", discordUserName);
-                        } else if (mcPlayerName != null) {
-                            pattern = pattern.replace("{user}", mcPlayerName);
-                        } else {
-                            continue;
-                        }
-                    }
-                    if (pattern.contains("{address}")) {
-                        String adr;
-                        if (address != null && (adr = address.getDisplayName()) != null) {
-                            pattern = pattern.replace("{address}", adr);
-                        } else {
-                            continue;
-                        }
-                    }
-                    pattern = pattern.replace("{url}", schematicUrl.toString());
-                    if (pattern.contains("{size}")) {
-                        if (discordUserName != null) {
-                            pattern = pattern.replace("{size}", this.formatter.format(fileSize));
-                        } else {
-                            continue;
-                        }
-                    }
-                    builder.addField(name, pattern, inline);
-                }
-            } else {
-                builder.setTitle("Missing config section");
-            }
-            builder.setColor(0x00c794);
+            return builder.build();
+        } catch (Exception e) {
+            this.logger.severe("Error when building schematic embed message");
+            e.printStackTrace();
+            return this.errorEmbed;
         }
-        return builder.build();
     }
 
+    private void setupPlaceholders() {
+        this.placeholders.put("{url}", this::getFormattedUrl);
+        this.placeholders.put("{playerName}", this::getFormattedPlayerName);
+        this.placeholders.put("{minecraftName}", SchematicDiscordEmbedProvider.SchematicEmbedData::getMcPlayerName);
+        this.placeholders.put("{discordName}", this::getFormattedDiscordId);
+        this.placeholders.put("{address}", this::getDisplayAddress);
+        this.placeholders.put("{size}", this::getDisplayFileSize);
+    }
+
+    private void readMessageConfig() {
+        EmbedBuilder errorBuilder = new EmbedBuilder();
+        ConfigurationSection section = this.section.getConfigurationSection("embed");
+        errorBuilder.setTitle("Error").setDescription("An error happened when formatting an embed message.").setColor(0xFF0000);
+        this.errorEmbed = errorBuilder.build();
+        try {
+            if (section == null) throw new InvalidSchematicSyncConfigException("No embed configuration section");
+            this.title = section.getString("title");
+            ConfigurationSection desc = section.getConfigurationSection("description");
+            if (desc != null) this.description = new Field(desc);
+            this.thumbnailUrl = section.getString("thumbnail");
+            ConfigurationSection fields = section.getConfigurationSection("fields");
+            if (fields != null) for (String key: fields.getKeys(false)) {
+                ConfigurationSection fieldSection = fields.getConfigurationSection(key);
+                this.fields.add(new Field(fieldSection));
+            }
+            this.color = section.getInt("color", -1);
+        } catch (Exception e) {
+            this.logger.severe("An error happened when reading the schematic sync embed section. Only error messages will be sent.");
+            e.printStackTrace();
+        }
+    }
+
+    private String getFormattedUrl(SchematicDiscordEmbedProvider.SchematicEmbedData data) {
+        URL url = data.getSchematicUrl();
+        if (url != null) {
+            return url.toString();
+        } else {
+            return null;
+        }
+    }
+
+    private String getFormattedPlayerName(SchematicDiscordEmbedProvider.SchematicEmbedData data) {
+        String discordId = this.getFormattedDiscordId(data);
+        if (discordId != null) {
+            return discordId;
+        } else {
+            String mcName = data.getMcPlayerName();
+            if (mcName != null) return MarkdownSanitizer.escape(mcName);
+        }
+        return null;
+    }
+
+    private String getFormattedDiscordId(SchematicDiscordEmbedProvider.SchematicEmbedData data) {
+        String discordId = data.getDiscordPlayerId();
+        if (discordId != null) {
+            return "<@" + discordId + ">";
+        }
+        return null;
+    }
+
+    private String getDisplayAddress(SchematicDiscordEmbedProvider.SchematicEmbedData data) {
+        Address addrr = data.getAddress();
+        if (addrr != null) return MarkdownSanitizer.escape(addrr.getDisplayName());
+        return null;
+    }
+
+    private String getDisplayFileSize(SchematicDiscordEmbedProvider.SchematicEmbedData data) {
+        long size = data.getFileSize();
+        if (size < 0) return null;
+        return this.formatter.format(size);
+    }
+
+    private class Field {
+
+        String name;
+        List<String> patterns;
+        boolean inLine;
+        //TODO required option
+
+        Field(ConfigurationSection section) {
+            this.name = section.getString("name");
+            this.patterns = section.getStringList("patterns");
+            this.inLine = section.getBoolean("inline");
+        }
+
+        private String formatValue(String formatString, SchematicDiscordEmbedProvider.SchematicEmbedData data) {
+            if (formatString == null) return null;
+            for (String placeholder: SchematicSyncConfig.this.placeholders.keySet()) if (formatString.contains(placeholder)) {
+                String value = SchematicSyncConfig.this.placeholders.get(placeholder).apply(data);
+                if (value == null) return null;
+                formatString = formatString.replaceAll(Pattern.quote(placeholder), value);
+            }
+            return formatString;
+        }
+
+        public String getFormattedValue(SchematicDiscordEmbedProvider.SchematicEmbedData data) {
+            for (String pattern: this.patterns) {
+                String formatted = this.formatValue(pattern, data);
+                if (formatted != null) return formatted;
+            }
+            return null;
+        }
+
+    }
     public static class InvalidSchematicSyncConfigException extends Exception {
         private InvalidSchematicSyncConfigException(String message) {
             super(message);

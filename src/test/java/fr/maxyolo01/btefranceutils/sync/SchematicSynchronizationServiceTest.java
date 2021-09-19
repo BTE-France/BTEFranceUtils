@@ -6,7 +6,6 @@ import com.sk89q.worldedit.regions.CuboidRegion;
 import com.sk89q.worldedit.regions.Region;
 import fr.dudie.nominatim.client.JsonNominatimClient;
 import fr.dudie.nominatim.client.NominatimClient;
-import fr.dudie.nominatim.model.Address;
 import fr.maxyolo01.btefranceutils.test.bukkit.DummyBukkitPlayer;
 import fr.maxyolo01.btefranceutils.test.discord.DummyTextChannel;
 import fr.maxyolo01.btefranceutils.test.worldedit.DummyLocalSession;
@@ -23,7 +22,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.junitpioneer.jupiter.TempDirectory;
 
-import javax.annotation.Nullable;
 import java.io.*;
 import java.net.URL;
 import java.nio.file.Path;
@@ -121,7 +119,7 @@ public class SchematicSynchronizationServiceTest {
             embed.assertNoDiscordId();
             embed.assertNoAddress();
             embed.assertFileSize(1024);
-            URL url = embed.url;
+            URL url = embed.data.getSchematicUrl();
             assertNotNull(url);
             String fname = url.toString().substring(31);
             assertTrue(this.wedDirectory.toPath().resolve(fname).toFile().exists());
@@ -160,67 +158,55 @@ public class SchematicSynchronizationServiceTest {
 
     private static class TestMessageEmbed extends MessageEmbed {
 
-        private final URL url;
-        private final String mcPlayerName;
-        private final String discordUserName;
-        private final Address address;
-        private final long fileSize;
+        private final SchematicDiscordEmbedProvider.SchematicEmbedData data;
 
-        public TestMessageEmbed(@Nullable URL schematicUrl,
-                                @Nullable String mcPlayerName,
-                                @Nullable String discordUserName,
-                                @Nullable Address address,
-                                long fileSize) {
+        public TestMessageEmbed(SchematicDiscordEmbedProvider.SchematicEmbedData data) {
             super("", "", "", EmbedType.RICH, OffsetDateTime.now(), 0, null, null, null, null, null, null, Collections.emptyList());
-            this.url = schematicUrl;
-            this.mcPlayerName = mcPlayerName;
-            this.discordUserName = discordUserName;
-            this.address = address;
-            this.fileSize = fileSize;
+            this.data = data;
         }
 
         public void assertUrl(String url) {
-            assertNotNull(this.url);
-            assertEquals(url, this.url.toString());
+            assertNotNull(this.data.getSchematicUrl());
+            assertEquals(url, this.data.getSchematicUrl().toString());
         }
 
         public void assertNoUrl() {
-            assertNull(this.url);
+            assertNull(this.data.getSchematicUrl());
         }
 
         public void assertMcPlayer(String playerName) {
-            assertNotNull(this.mcPlayerName);
-            assertEquals(playerName, this.mcPlayerName);
+            assertNotNull(this.data.getMcPlayerName());
+            assertEquals(playerName, this.data.getMcPlayerName());
         }
 
         public void assertNoMcPlayer() {
-            assertNull(this.mcPlayerName);
+            assertNull(this.data.getMcPlayerName());
         }
 
         public void assertDiscordId(String name) {
-            assertNotNull(this.discordUserName);
-            assertEquals(name, this.discordUserName);
+            assertNotNull(this.data.getDiscordPlayerId());
+            assertEquals(name, this.data.getDiscordPlayerId());
         }
 
         public void assertNoDiscordId() {
-            assertNull(this.discordUserName);
+            assertNull(this.data.getDiscordPlayerId());
         }
 
         public void assertAddressContains(String str) {
-            assertNotNull(this.address);
-            assertTrue(this.address.getDisplayName().contains(str));
+            assertNotNull(this.data.getAddress());
+            assertTrue(this.data.getAddress().getDisplayName().contains(str));
         }
 
         public void assertNoAddress() {
-            assertNull(this.address);
+            assertNull(this.data.getAddress());
         }
 
         public void assertFileSize(long size) {
-            assertEquals(size, this.fileSize);
+            assertEquals(size, this.data.getFileSize());
         }
 
         public void assertNoFileSize() {
-            assertEquals(-1, this.fileSize);
+            assertEquals(-1, this.data.getFileSize());
         }
 
     }
