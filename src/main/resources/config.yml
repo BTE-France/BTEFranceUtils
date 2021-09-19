@@ -23,7 +23,9 @@ schematicSync:
     title: "New schematic!"
     description:
       patterns:
-      - "{userName} created a new schematic!"
+      - "{userName} saved a new schematic in {city}!"
+      - "{userName} saved a new schematic!"
+      - "A new schematic has been saved!"
     fields:
       url:
         name: "Download link:"

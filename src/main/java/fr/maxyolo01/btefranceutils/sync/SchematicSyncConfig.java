@@ -5,6 +5,7 @@ import com.sk89q.worldedit.WorldEdit;
 import fr.dudie.nominatim.client.JsonNominatimClient;
 import fr.dudie.nominatim.client.NominatimClient;
 import fr.dudie.nominatim.model.Address;
+import fr.dudie.nominatim.model.Element;
 import fr.maxyolo01.btefranceutils.util.formatting.ByteFormatter;
 
 import fr.maxyolo01.btefranceutils.util.formatting.IECByteFormatter;
@@ -130,6 +131,10 @@ public class SchematicSyncConfig {
         this.placeholders.put("{minecraftName}", SchematicDiscordEmbedProvider.SchematicEmbedData::getMcPlayerName);
         this.placeholders.put("{discordName}", this::getFormattedDiscordId);
         this.placeholders.put("{address}", this::getDisplayAddress);
+        String[] elements = {"road", "suburb", "city", "country"};
+        for (String element: elements) {
+            this.placeholders.put("{" + element + "}", d -> this.getFormattedAddressElement(element, d));
+        }
         this.placeholders.put("{size}", this::getDisplayFileSize);
     }
 
@@ -187,6 +192,16 @@ public class SchematicSyncConfig {
     private String getDisplayAddress(SchematicDiscordEmbedProvider.SchematicEmbedData data) {
         Address addrr = data.getAddress();
         if (addrr != null) return MarkdownSanitizer.escape(addrr.getDisplayName());
+        return null;
+    }
+
+    private String getFormattedAddressElement(String element, SchematicDiscordEmbedProvider.SchematicEmbedData data) {
+        Address address = data.getAddress();
+        if (address == null || element == null) return null;
+        Element[] elements = address.getAddressElements();
+        for (Element el: elements) if (element.equals(el.getKey())) {
+            return el.getValue();
+        }
         return null;
     }
 

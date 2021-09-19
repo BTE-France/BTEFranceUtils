@@ -21,6 +21,11 @@ embed:
       patterns:
       - "{address}"
       inline: false
+    city:
+      name: "City"
+      patterns:
+        - "{city}"
+      inline: false
     size:
       name: "File size:"
       patterns:

@@ -1,5 +1,6 @@
 package fr.maxyolo01.btefranceutils.sync;
 
+import fr.dudie.nominatim.model.Address;
 import fr.maxyolo01.btefranceutils.test.nominatim.NominatimTestUtil;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.MessageEmbed;
 import org.bukkit.configuration.ConfigurationSection;
@@ -30,16 +31,28 @@ public class SchematicSyncConfigTest {
 
     @Test
     public void testFullEmbed() throws IOException {
+        Address testAddress = NominatimTestUtil.getDisplayNameAddress(
+                "rue Dupont",
+                "Beaucartier",
+                "Perduville",
+                "Perduville",
+                "Belleregion",
+                "185000",
+                "Paysdesgens",
+                "pdg",
+                "1 rue Dupont, 185000 Perduville, Paysdesgens"
+        );
         SchematicDiscordEmbedProvider.SchematicEmbedData data = new SchematicDiscordEmbedProvider.SchematicEmbedData(
                 new URL("https://example.com/schematics/000/schematic.schematic"),
                 "TestPlayer",
                 "00000000",
-                NominatimTestUtil.getDisplayNameAddress("1 rue Dupont, 185000 Perduville, Paysdesgens"),
+                testAddress,
                 2048
         );
         MessageEmbed embed = this.config.makeEmbed(data);
         assertEquals("Test title", embed.getTitle());
         assertEquals("Test description: https://example.com/schematics/000/schematic.schematic, <@00000000>, TestPlayer, <@00000000>, 2.0 kiO, 1 rue Dupont, 185000 Perduville, Paysdesgens", embed.getDescription());
+        assertEquals("Perduville", embed.getFields().get(2).getValue());
         data = new SchematicDiscordEmbedProvider.SchematicEmbedData(
                 new URL("https://example.com/schematics/000/schematic.schematic"),
                 "TestPlayer",
