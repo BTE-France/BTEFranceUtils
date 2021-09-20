@@ -25,6 +25,7 @@ public interface SchematicDiscordEmbedProvider {
     final class SchematicEmbedData {
 
         private final URL schematicUrl;
+        private final String fileName;
         private final String mcPlayerName;
         private final String discordPlayerId;
         private final Address address;
@@ -40,11 +41,13 @@ public interface SchematicDiscordEmbedProvider {
          */
         public SchematicEmbedData(
                 @Nullable URL schematicUrl,
+                @Nullable String fileName,
                 @Nullable String mcPlayerName,
                 @Nullable String discordPlayerId,
                 @Nullable Address address,
                 long fileSize) {
             this.schematicUrl = schematicUrl;
+            this.fileName = fileName;
             this.mcPlayerName = mcPlayerName;
             this.discordPlayerId = discordPlayerId;
             this.address = address;
@@ -53,6 +56,10 @@ public interface SchematicDiscordEmbedProvider {
 
         public URL getSchematicUrl() {
             return this.schematicUrl;
+        }
+
+        public String getFileName() {
+            return this.fileName;
         }
 
         public String getMcPlayerName() {

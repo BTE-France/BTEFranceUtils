@@ -131,6 +131,7 @@ public class SchematicSyncConfig {
 
     private void setupPlaceholders() {
         this.placeholders.put("{url}", this::getFormattedUrl);
+        this.placeholders.put("{fileName}", this::getFormattedFileName);
         this.placeholders.put("{playerName}", this::getFormattedPlayerName);
         this.placeholders.put("{minecraftName}", SchematicDiscordEmbedProvider.SchematicEmbedData::getMcPlayerName);
         this.placeholders.put("{discordName}", this::getFormattedDiscordId);
@@ -172,6 +173,12 @@ public class SchematicSyncConfig {
         } else {
             return null;
         }
+    }
+
+    private String getFormattedFileName(SchematicDiscordEmbedProvider.SchematicEmbedData data) {
+        String fileName = data.getFileName();
+        if (fileName == null) return null;
+        return MarkdownSanitizer.escape(fileName);
     }
 
     private String getFormattedPlayerName(SchematicDiscordEmbedProvider.SchematicEmbedData data) {

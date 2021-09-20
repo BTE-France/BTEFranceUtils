@@ -98,6 +98,7 @@ public class SchematicSynchronizationServiceTest {
         lock.unlock();
         assertTrue(this.wedDirectory.toPath().resolve("41d82e57322fcb2adc80111ccfc50bc7e6a82d32eb9740bb4dd758248ff3ae52/schem.schematic").toFile().exists());
         embed.assertUrl("https://example.com/schematics/41d82e57322fcb2adc80111ccfc50bc7e6a82d32eb9740bb4dd758248ff3ae52/schem.schematic");
+        embed.assertFileName("schem.schematic");
         embed.assertMcPlayer("DummyPlayer");
         embed.assertDiscordId("DummyPlayer#4567");
         embed.assertAddressContains("Paris");
@@ -121,6 +122,7 @@ public class SchematicSynchronizationServiceTest {
             embed.assertFileSize(1024);
             URL url = embed.data.getSchematicUrl();
             assertNotNull(url);
+            assertNotNull(embed.data.getFileName());
             String fname = url.toString().substring(31);
             assertTrue(this.wedDirectory.toPath().resolve(fname).toFile().exists());
         }
@@ -172,6 +174,10 @@ public class SchematicSynchronizationServiceTest {
 
         public void assertNoUrl() {
             assertNull(this.data.getSchematicUrl());
+        }
+
+        public void assertFileName(String fileName) {
+            assertEquals(fileName, this.data.getFileName());
         }
 
         public void assertMcPlayer(String playerName) {

@@ -44,6 +44,7 @@ public class SchematicSyncConfigTest {
         );
         SchematicDiscordEmbedProvider.SchematicEmbedData data = new SchematicDiscordEmbedProvider.SchematicEmbedData(
                 new URL("https://example.com/schematics/000/schematic.schematic"),
+                "schematic.schematic",
                 "TestPlayer",
                 "00000000",
                 testAddress,
@@ -53,8 +54,10 @@ public class SchematicSyncConfigTest {
         assertEquals("Test title", embed.getTitle());
         assertEquals("Test description: https://example.com/schematics/000/schematic.schematic, <@00000000>, TestPlayer, <@00000000>, 2.0 kiO, 1 rue Dupont, 185000 Perduville, Paysdesgens", embed.getDescription());
         assertEquals("Perduville", embed.getFields().get(2).getValue());
+        assertEquals("schematic.schematic", embed.getFields().get(4).getValue());
         data = new SchematicDiscordEmbedProvider.SchematicEmbedData(
                 new URL("https://example.com/schematics/000/schematic.schematic"),
+                "schematic.schematic",
                 "TestPlayer",
                 "00000000",
                 null,
@@ -64,6 +67,7 @@ public class SchematicSyncConfigTest {
         assertEquals("Test description: https://example.com/schematics/000/schematic.schematic, <@00000000>, TestPlayer, <@00000000>, 2.0 kiO", embed.getDescription());
         data = new SchematicDiscordEmbedProvider.SchematicEmbedData(
                 new URL("https://example.com/schematics/000/schematic.schematic"),
+                "schematic.schematic",
                 "TestPlayer",
                 "00000000",
                 null,
@@ -73,6 +77,7 @@ public class SchematicSyncConfigTest {
         assertEquals("Test description: https://example.com/schematics/000/schematic.schematic, <@00000000>, TestPlayer, <@00000000>", embed.getDescription());
         data = new SchematicDiscordEmbedProvider.SchematicEmbedData(
                 new URL("https://example.com/schematics/000/schematic.schematic"),
+                "schematic.schematic",
                 "TestPlayer",
                 null,
                 null,
@@ -82,6 +87,7 @@ public class SchematicSyncConfigTest {
         assertEquals("Test description: https://example.com/schematics/000/schematic.schematic, TestPlayer, TestPlayer", embed.getDescription());
         data = new SchematicDiscordEmbedProvider.SchematicEmbedData(
                 new URL("https://example.com/schematics/000/schematic.schematic"),
+                "schematic.schematic",
                 null,
                 null,
                 null,
@@ -91,6 +97,7 @@ public class SchematicSyncConfigTest {
         assertEquals("Test description: https://example.com/schematics/000/schematic.schematic", embed.getDescription());
         data = new SchematicDiscordEmbedProvider.SchematicEmbedData(
                 null,
+                "schematic.schematic",
                 null,
                 null,
                 null,

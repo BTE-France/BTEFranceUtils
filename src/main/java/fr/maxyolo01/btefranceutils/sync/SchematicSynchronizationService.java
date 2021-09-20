@@ -174,7 +174,7 @@ public class SchematicSynchronizationService {
         urlFuture.thenAcceptBothAsync(cityFuture, (url, address) -> {
             // Send a notification on Discord
             try {
-                SchematicDiscordEmbedProvider.SchematicEmbedData data = new SchematicDiscordEmbedProvider.SchematicEmbedData(url, mcName, dcName, address, size);
+                SchematicDiscordEmbedProvider.SchematicEmbedData data = new SchematicDiscordEmbedProvider.SchematicEmbedData(url, event.file().getName(), mcName, dcName, address, size);
                 MessageEmbed embed = this.messageProvider.provide(data);
                 this.channel.sendMessage(embed).queue();
                 this.logger.fine("Sent Discord notification for schematic!");
@@ -212,7 +212,7 @@ public class SchematicSynchronizationService {
                                     progress.incrementAndGet(),
                                     count));
                 } else {
-                    SchematicDiscordEmbedProvider.SchematicEmbedData data = new SchematicDiscordEmbedProvider.SchematicEmbedData(url,  null, null, null, file.length());
+                    SchematicDiscordEmbedProvider.SchematicEmbedData data = new SchematicDiscordEmbedProvider.SchematicEmbedData(url,  file.getName(), null, null, null, file.length());
                     MessageEmbed embed = this.messageProvider.provide(data);
                     synchronized (lock) {
                         this.channel.sendMessage(embed).queue();

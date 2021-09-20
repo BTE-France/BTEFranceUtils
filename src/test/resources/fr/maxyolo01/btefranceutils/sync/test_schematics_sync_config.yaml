@@ -3,23 +3,23 @@ embed:
   title: "Test title"
   description:
     patterns:
-    - "Test description: {url}, {playerName}, {minecraftName}, {discordName}, {size}, {address}"
-    - "Test description: {url}, {playerName}, {minecraftName}, {discordName}, {size}"
-    - "Test description: {url}, {playerName}, {minecraftName}, {discordName}"
-    - "Test description: {url}, {playerName}, {minecraftName}"
-    - "Test description: {url}, {playerName}"
-    - "Test description: {url}"
-    - "Test description"
+     - "Test description: {url}, {playerName}, {minecraftName}, {discordName}, {size}, {address}"
+     - "Test description: {url}, {playerName}, {minecraftName}, {discordName}, {size}"
+     - "Test description: {url}, {playerName}, {minecraftName}, {discordName}"
+     - "Test description: {url}, {playerName}, {minecraftName}"
+     - "Test description: {url}, {playerName}"
+     - "Test description: {url}"
+     - "Test description"
   fields:
     url:
       name: "Download link:"
       patterns:
-      - "{url}"
+        - "{url}"
       inline: false
     address:
       name: "Address:"
       patterns:
-      - "{address}"
+        - "{address}"
       inline: false
     city:
       name: "City"
@@ -29,5 +29,11 @@ embed:
     size:
       name: "File size:"
       patterns:
-      - "{size}"
+       - "{size}"
       inline: true
+    filename:
+      name: "File name:"
+      patterns:
+       - "{fileName}"
+      inline: false
+      required: true
