@@ -1,6 +1,7 @@
 embed:
   thumbnail: "https://example.com/logo.png"
   title: "Test title"
+  color: 00c794
   description:
     patterns:
      - "Test description: {url}, {playerName}, {minecraftName}, {discordName}, {size}, {address}"

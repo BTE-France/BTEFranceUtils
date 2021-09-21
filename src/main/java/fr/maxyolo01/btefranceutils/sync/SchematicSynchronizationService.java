@@ -37,7 +37,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static fr.maxyolo01.btefranceutils.util.formatting.Formatting.hexString;
+import static fr.maxyolo01.btefranceutils.util.formatting.Formatting.bytesToHexString;
 
 /**
  * A service that synchronizes the world edit schematic directory with a discord channel through a directory exposed to a web server..
@@ -272,7 +272,7 @@ public class SchematicSynchronizationService {
     private File getWebSubDirectory(File file) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
-            String prefix = hexString(md.digest((this.salt + file.getName()).getBytes(StandardCharsets.UTF_8)));
+            String prefix = bytesToHexString(md.digest((this.salt + file.getName()).getBytes(StandardCharsets.UTF_8)));
             return this.webDirectory.resolve(prefix).toFile();
         } catch(NoSuchAlgorithmException e) {
             this.logger.severe("How on Earth is SHA-256 not supported??");

@@ -18,14 +18,14 @@ schematicSync:
   nominatimEndpoint: "https://nominatim.openstreetmap.org/"
   nominatimEmail: "example@example.com"
   embed:
-    color: 3193
+    color: 00c794
     thumbnail: "https://i.imgur.com/1ZPB2Wt.png"
     title: "New schematic!"
     description:
       patterns:
-      - "{userName} saved a new schematic in {city}!"
-      - "{userName} saved a new schematic!"
-      - "A new schematic has been saved!"
+      - "{userName} saved a new schematic as {fileName} in {city}!"
+      - "{userName} saved a new schematic as {fileName}!"
+      - "A schematic has been saved as {fileName}!"
       required: true
     fields:
       url:

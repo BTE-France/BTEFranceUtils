@@ -8,6 +8,7 @@ import fr.dudie.nominatim.model.Address;
 import fr.dudie.nominatim.model.Element;
 import fr.maxyolo01.btefranceutils.util.formatting.ByteFormatter;
 
+import fr.maxyolo01.btefranceutils.util.formatting.Formatting;
 import fr.maxyolo01.btefranceutils.util.formatting.IECByteFormatter;
 import github.scarsz.discordsrv.DiscordSRV;
 import github.scarsz.discordsrv.dependencies.jda.api.EmbedBuilder;
@@ -159,7 +160,8 @@ public class SchematicSyncConfig {
                 ConfigurationSection fieldSection = fields.getConfigurationSection(key);
                 this.fields.add(new Field(fieldSection));
             }
-            this.color = section.getInt("color", -1);
+            String colorString = section.getString("color");
+            this.color = colorString != null ? Formatting.hexColorToInt(colorString, false) : -1;
         } catch (Exception e) {
             this.logger.severe("An error happened when reading the schematic sync embed section. Only error messages will be sent.");
             e.printStackTrace();

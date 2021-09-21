@@ -106,4 +106,5 @@ public class SchematicSyncConfigTest {
         embed = this.config.makeEmbed(data);
         assertEquals("Test description", embed.getDescription());
     }
+
 }
