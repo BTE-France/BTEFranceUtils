@@ -15,7 +15,6 @@ import github.scarsz.discordsrv.dependencies.jda.api.EmbedBuilder;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.MessageEmbed;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.TextChannel;
 import net.buildtheearth.terraplusplus.generator.EarthGeneratorSettings;
-import net.dv8tion.jda.api.utils.MarkdownSanitizer;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.bukkit.configuration.ConfigurationSection;
 
@@ -180,7 +179,7 @@ public class SchematicSyncConfig {
     private String getFormattedFileName(SchematicDiscordEmbedProvider.SchematicEmbedData data) {
         String fileName = data.getFileName();
         if (fileName == null) return null;
-        return MarkdownSanitizer.escape(fileName);
+        return Formatting.escapeMarkdown(fileName);
     }
 
     private String getFormattedPlayerName(SchematicDiscordEmbedProvider.SchematicEmbedData data) {
@@ -189,7 +188,7 @@ public class SchematicSyncConfig {
             return discordId;
         } else {
             String mcName = data.getMcPlayerName();
-            if (mcName != null) return MarkdownSanitizer.escape(mcName);
+            if (mcName != null) return Formatting.escapeMarkdown(mcName);
         }
         return null;
     }
@@ -204,7 +203,7 @@ public class SchematicSyncConfig {
 
     private String getDisplayAddress(SchematicDiscordEmbedProvider.SchematicEmbedData data) {
         Address addrr = data.getAddress();
-        if (addrr != null) return MarkdownSanitizer.escape(addrr.getDisplayName());
+        if (addrr != null) return Formatting.escapeMarkdown(addrr.getDisplayName());
         return null;
     }
 

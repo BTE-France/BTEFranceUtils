@@ -13,6 +13,18 @@ public final class Formatting {
 
     private Formatting() {} // Utility class, no instances allowed
 
+    public static String escapeMarkdown(CharSequence sequence) {
+        StringBuilder builder = new StringBuilder();
+        for(int i = 0; i < sequence.length(); i++) {
+            char c = sequence.charAt(i);
+            if ("\\`*_{}[]()#+-.!".contains("" + c)) {
+                builder.append('\\');
+            }
+            builder.append(c);
+        }
+        return builder.toString();
+    }
+
     /**
      * Computes the hexadecimal representation of a byte array
      *
