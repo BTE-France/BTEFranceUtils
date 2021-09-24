@@ -1,4 +1,5 @@
 plugins {
+    id 'com.github.johnrengelman.shadow' version '7.0.0'
     id 'java'
     id 'eclipse'
 }
@@ -40,17 +41,56 @@ repositories {
         // DiscordSRV (JDA)
         url = 'https://m2.dv8tion.net/releases'
     }
+
+    maven {
+        // Get stuff from GitHub
+        name = "JitPack"
+        url = "https://jitpack.io/"
+    }
+
+    maven {
+        // Terra++ dependencies
+        name = "DaPorkchop_"
+        url = "https://maven.daporkchop.net/"
+    }
+    maven {
+        // Terra++ dependencies
+        name = "OpenCollab Snapshots"
+        url = "https://repo.opencollab.dev/snapshot/"
+    }
 }
 
 dependencies {
 
     implementation 'org.spigotmc:spigot-api:1.12.2-R0.1-SNAPSHOT'
-    implementation 'com.sk89q.worldedit:worldedit-core:6.1'
-    implementation 'com.sk89q.worldedit:worldedit-bukkit:6.1.5'
+    implementation ('com.github.BTE-France:BTE-France-WorldEdit:2eb559cd14') {
+        exclude module: 'worldedit-sponge-api7.1.0'
+        exclude module: 'worldedit-forge-mc1.12.2'
+    }
     implementation 'com.discordsrv:discordsrv:1.23.0'
+    implementation 'com.github.BuildTheEarth:terraplusplus:a48a5a2054f4655d230711c3c68af3ad3b476db4'
+    implementation 'fr.dudie:nominatim-api:3.4'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.7.1'
+    testImplementation 'org.junit-pioneer:junit-pioneer:0.1.2'
+    testImplementation 'com.github.BuildTheEarth:terraplusplus:a48a5a2054f4655d230711c3c68af3ad3b476db4'
 
+}
+
+build.dependsOn shadowJar
+
+shadowJar {
+    archiveClassifier.set('')
+    dependencies {
+        include(dependency('fr.dudie:nominatim-api:3.4'))
+        include(dependency {
+            it.moduleGroup == 'org.apache.httpcomponents'
+                    || it.moduleGroup == 'commons-logging'
+                    || it.moduleGroup == 'com.github.filosganga'
+                    || it.moduleGroup == 'org.locationtech.jts'
+                    || it.moduleGroup == 'com.vividsolutions'
+        })
+    }
 }
 
 tasks.named('test') {

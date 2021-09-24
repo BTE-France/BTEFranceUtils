@@ -1,5 +1,7 @@
+# Message shown to everyone when a new player joins the server for the first time
 publicWelcomeMessage: "&6Bienvenue {player}! Tu es le joueur n\u00B0{count} \u00E0 te connecter sur BTE France!"
 
+# Sent to all players when they join the server
 privateWelcomeMessage:
 - "&3-------------------------------------------"
 - "&6Bienvenue sur BTE France, {player}! Si tu es nouveau, merci de lire le channel #comment-rejoindre sur Discord!"
@@ -8,3 +10,41 @@ privateWelcomeMessage:
 - " "
 - "&6Joueurs en ligne / Online players: &c{online}"
 - "&3-------------------------------------------"
+
+# Configuration for the schematic Minecraft to Discord synchronization service
+schematicSync:
+  webDirectoryPath: "" # Where in the system should the symlink to the schematics be created
+  #symlinkPath: "" # Path to use as the root of the symlinks. Leave it commented to use the webDirectoryPath as the symlink root
+  urlRoot: "https://example.com" # Start of the url that should point to the schematic web directory
+  salt: "CHANGE_THIS_AND_KEEP_IT_SECRET" # Used to generate secure ungessable prefixes for the schematics. This should be unique to your server to avoid enumeration attacks and keep your schematics secret.
+  channelId: 0 # Numerical ID of the discord channel where to post messages
+  nominatimUserAgent: "BTE France Minecraft plugin" # User agent for the nominatim client
+  nominatimEndpoint: "https://nominatim.openstreetmap.org/" # Nominatim endpoint (OSM geocoding service)
+  nominatimEmail: "example@example.com" # email to report to nominatim so they can contact you
+  embed: # Settings for the embeds sent when a schematic is created
+    color: 00c794 # Color for the embed, as a hex string
+    thumbnail: "https://i.imgur.com/1ZPB2Wt.png"
+    title: "New schematic!"
+    description:
+      patterns: # First pattern for which all fields can be populated will be picked
+      - "{playerName} saved a new schematic as {fileName} in {city}!"
+      - "{playerName} saved a new schematic as {fileName}!"
+      - "A schematic has been saved as {fileName}!"
+      required: true # Send an error message if no pattern was picked
+    fields:
+      url:
+        name: "Download link:" # Name of the field
+        patterns:
+        - "{url}" # Same as description pattern
+        inline: false # Not inline
+        required: true # Send an error message if no pattern was picked
+      address:
+        name: "Address:"
+        patterns:
+        - "{address}"
+        inline: false
+      size:
+        name: "File size:"
+        patterns:
+        - "{size}"
+        inline: true

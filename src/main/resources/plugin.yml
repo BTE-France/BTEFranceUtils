@@ -3,8 +3,11 @@ author: mAxYoLo01
 version: ${version}
 main: fr.maxyolo01.btefranceutils.BteFranceUtils
 description: BTE France custom plugin
+depend: [WorldEdit, DiscordSRV]
 commands:
     btefrance:
         description: BTE France command
     banroulette:
         description: Ban roulette with currently connected players
+    syncschems:
+        description: Synchronize already existing schematics with Discord
