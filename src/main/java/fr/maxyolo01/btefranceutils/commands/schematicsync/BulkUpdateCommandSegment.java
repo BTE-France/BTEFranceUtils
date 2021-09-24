@@ -11,7 +11,7 @@ public class BulkUpdateCommandSegment extends SegmentedCommandExecutor {
 
     public BulkUpdateCommandSegment() {
         this.setPermissionNode("btefrance.schematicsync.bulk");
-        this.setErrorMessage(ChatColor.RED + "Invalid syntax: /syncschems bulk");
+        this.setErrorMessage(ChatColor.RED + "Invalid syntax: /syncschems bulk <start|status|cancel|unsubscribe>");
         this.addSegment("start", this::start);
         this.addSegment("status", this::status);
         this.addSegment("cancel", this::stop);
