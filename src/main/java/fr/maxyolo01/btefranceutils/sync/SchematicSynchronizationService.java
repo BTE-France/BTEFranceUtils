@@ -14,6 +14,7 @@ import net.buildtheearth.terraplusplus.projection.GeographicProjection;
 import net.buildtheearth.terraplusplus.projection.OutOfProjectionBoundsException;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.ConsoleCommandSender;
 
 import javax.annotation.Nonnull;
 import java.io.File;
@@ -27,9 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Locale;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -59,7 +58,9 @@ public class SchematicSynchronizationService {
 
     private ExecutorService executor;
 
-    private boolean setup, running;
+    private boolean running;
+
+    private BulkUpdateTask bulkTask;
 
     public SchematicSynchronizationService(
             @Nonnull Path schematicDirectory,
@@ -87,11 +88,14 @@ public class SchematicSynchronizationService {
     }
 
     /**
-     * Prepares and checks the necessary resources for the service to run.
+     * Starts the service.
      *
-     * @throws IOException if the necessary resources are not available
+     * @throws IOException if something is wrong with your IO setup
      */
-    public void setup() throws IOException {
+    public void start() throws IOException {
+        if (this.isRunning()) {
+            throw new IllegalStateException("Already running");
+        }
         File schemDir = this.schematicDirectory.toFile();
         File webDir = this.webDirectory.toFile();
         if (!schemDir.exists() && !schemDir.mkdirs()) {
@@ -104,32 +108,17 @@ public class SchematicSynchronizationService {
             throw new IOException("Web directory did not exist.");
         } else if (!webDir.isDirectory()) {
             throw new IOException("Web directory path is not a directory");
-        } /*else if (!webDir.canWrite()) {
+        } else if (!webDir.canWrite()) {
             throw new IOException("Missing required write permission for the web directory");
-        }*/
+        }
         this.executor = Executors.newFixedThreadPool(2, SchematicSynchronizationService::makeThread);
-        this.setup = true;
-    }
-
-    /**
-     * Starts the service.
-     *
-     * @throws IllegalStateException if the service hasn't been setup with {@link #setup()} or is already running
-     */
-    public void start() {
-        if (!this.setup) {
-            throw new IllegalStateException("Schematic service hasn't been setup!");
-        }
-        if (this.isRunning()) {
-            throw new IllegalStateException("Already running");
-        }
         WorldEdit.getInstance().getEventBus().register(this);
         this.running = true;
         this.logger.info("Schematic synchronization service is now running.");
     }
 
     /**
-     * Stops this services and frees all held resources.
+     * Stops this services and frees all held resources. Waits for tasks to finish.
      *
      * @throws InterruptedException if the thread was interrupted before all tasks finished
      * @throws IllegalStateException if the service hasn't been started with {@link #start()}
@@ -144,8 +133,26 @@ public class SchematicSynchronizationService {
             this.logger.severe("Schematic service working pool took more than one minute to stop, something might be wrong!");
         }
         this.running = false;
-        this.setup = false;
         this.logger.info("Schematic synchronization has been stopped.");
+    }
+
+    /**
+     * Stops this services and frees all held resources. Cancels all tasks.
+     *
+     * @throws InterruptedException if the thread was interrupted before all tasks finished
+     * @throws IllegalStateException if the service hasn't been started with {@link #start()}
+     */
+    public void terminate() throws InterruptedException {
+        if (!this.isRunning()) {
+            throw new IllegalStateException("Not running");
+        }
+        WorldEdit.getInstance().getEventBus().unregister(this);
+        this.executor.shutdownNow();
+        if (!this.executor.awaitTermination(1, TimeUnit.MINUTES)) {
+            this.logger.severe("Schematic service working pool took more than one minute to terminate, something might be wrong!");
+        }
+        this.running = false;
+        this.logger.info("Schematic synchronization has been terminated.");
     }
 
     /**
@@ -185,32 +192,29 @@ public class SchematicSynchronizationService {
         }, this.executor);
     }
 
-    public void processExistingSchematics(CommandSender sender) {
+    public void startBulkUpdate(CommandSender sender) {
+        if (bulkTask != null) throw new IllegalStateException("A bulk update task is already running.");
         File[] inDirectory = this.schematicDirectory.toFile().listFiles();
         if (inDirectory == null) {
             throw new IllegalStateException("Cannot list schematic directory");
         }
         Set<File> files = Stream.of(inDirectory).filter(File::isFile).collect(Collectors.toSet());
-        final int count = files.size();
-        sender.sendMessage(ChatColor.BLUE + "Found " + count + " schematics, starting linking process...");
-        AtomicInteger progress = new AtomicInteger(0);
+        this.bulkTask = new BulkUpdateTask(files.size());
+        this.bulkTask.subscribeSender(sender);
+        String message = ChatColor.BLUE + "Found " + this.bulkTask.totalFileCount + " schematics, starting linking process...";
+        this.bulkTask.broadcast(message);
+        if (!(sender instanceof ConsoleCommandSender)) {
+            this.logger.info(message);
+        }
         final Object lock = new Object();
-        files.forEach(file -> CompletableFuture.runAsync(() -> {
+        files.forEach(file -> this.bulkTask.addFuture(CompletableFuture.runAsync(() -> {
             File subWebDir = this.getWebSubDirectory(file);
             if (subWebDir.exists() && subWebDir.isDirectory()) {
-                sender.sendMessage(ChatColor.LIGHT_PURPLE +
-                        String.format("Schematic %s was already linked, ignored it (%s/%s)",
-                                file.getName(),
-                                progress.incrementAndGet(),
-                                count));
+                this.bulkTask.ignored(file);
             } else {
                 URL url = this.linkSchematicFile(file, subWebDir);
                 if (url == null) {
-                    sender.sendMessage(ChatColor.RED +
-                            String.format("There was a problem when linking schematic %s (%s/%s)",
-                                    file.getName(),
-                                    progress.incrementAndGet(),
-                                    count));
+                    this.bulkTask.error(file);
                 } else {
                     SchematicDiscordEmbedProvider.SchematicEmbedData data = new SchematicDiscordEmbedProvider.SchematicEmbedData(url,  file.getName(), null, null, null, file.length());
                     MessageEmbed embed = this.messageProvider.provide(data);
@@ -221,14 +225,14 @@ public class SchematicSynchronizationService {
                         } catch (InterruptedException ignored) {}
                         lock.notify();
                     }
-                    sender.sendMessage(ChatColor.GREEN +
-                            String.format("Schematic %s was successfully linked (%s/%s)",
-                                    file.getName(),
-                                    progress.incrementAndGet(),
-                                    count));
+                    this.bulkTask.success(file);
                 }
             }
-        }, this.executor));
+        }, this.executor)));
+    }
+
+    public BulkUpdateTask getBulkUpdateTask() {
+        return this.bulkTask;
     }
 
     private URL linkSchematicFile(File file, File webSubDir) {
@@ -316,6 +320,161 @@ public class SchematicSynchronizationService {
         thread.setPriority(Thread.MIN_PRIORITY);
         thread.setName("BTE-FR Schematic worker");
         return thread;
+    }
+
+    public class BulkUpdateTask {
+
+        private final int totalFileCount;
+        private final AtomicInteger successes = new AtomicInteger();
+        private final AtomicInteger errors = new AtomicInteger();
+        private final AtomicInteger ignored = new AtomicInteger();
+        private final Set<CommandSender> senders = new HashSet<>();
+        private final List<CompletableFuture<?>> futures = new ArrayList<>();
+
+        private BulkUpdateTask(int totalFileCount) {
+            this.totalFileCount = totalFileCount;
+        }
+
+        public void success(File file) {
+            this.successes.incrementAndGet();
+            this.broadcast(ChatColor.GREEN +
+                    "Schematic %s was successfully linked (%s/%s | %s%%)",
+                    file.getName(),
+                    this.progress(),
+                    this.totalFileCount,
+                    Math.floor(this.percentProgress()));
+            this.checkDone();
+        }
+
+        public void ignored(File file) {
+            this.ignored.incrementAndGet();
+            this.broadcast(ChatColor.LIGHT_PURPLE +
+                            "Schematic %s was already linked, ignored it (%s/%s | %s%%)",
+                            file.getName(),
+                            this.progress(),
+                            this.totalFileCount,
+                    Math.floor(this.percentProgress()));
+            this.checkDone();
+        }
+
+        public void error(File file) {
+            this.errors.incrementAndGet();
+            this.broadcast(
+                    ChatColor.RED + "There was a problem when linking schematic %s (%s/%s | %s%%)",
+                    file.getName(),
+                    this.progress(),
+                    this.totalFileCount,
+                    Math.floor(this.percentProgress()));
+            this.checkDone();
+        }
+
+        public int progress() {
+            return this.successes.get() + this.errors.get() + this.ignored.get();
+        }
+
+        public float percentProgress() {
+            return this.progress() * 100f / this.totalFileCount;
+        }
+
+        public void checkDone() {
+            if (this.progress() == this.totalFileCount) {
+                this.finish(ChatColor.GREEN + "COMPLETED" + ChatColor.RESET);
+            }
+        }
+
+        private void finish(String cause) {
+            String message1 = String.format("Finished bulk update: %s ", cause);
+            String message2 = this.getProgressMessage();
+            this.broadcast(message1);
+            this.broadcast(message2);
+            boolean console = false;
+            synchronized (this.senders) {
+                for(CommandSender sender: this.senders) if (sender instanceof ConsoleCommandSender) {
+                    console = true;
+                    break;
+                }
+            }
+            if (!console) {
+                SchematicSynchronizationService.this.logger.info(message1);
+                SchematicSynchronizationService.this.logger.info(message2);
+            }
+            synchronized (this.senders) {
+                this.senders.clear();
+            }
+            synchronized (this.futures) {
+                this.futures.clear();
+            }
+            SchematicSynchronizationService.this.bulkTask = null; // We are done here
+        }
+
+        public void sendProgressTo(CommandSender sender) {
+            sender.sendMessage(this.getProgressMessage());
+        }
+
+        public void broadcast(String message, Object... args) {
+            synchronized (this.senders) {
+                for(CommandSender sender: this.senders) {
+                    sender.sendMessage(String.format(message, args));
+                }
+            }
+        }
+
+        private String getProgressMessage() {
+            final int successes = this.successes.get();
+            final int errors = this.errors.get();
+            final int ignored = this.ignored.get();
+            final int remaining = this.totalFileCount - successes - ignored - errors;
+            ChatColor successesColor;
+            if (successes == this.totalFileCount) {
+                successesColor = ChatColor.GREEN;
+            } else if (successes == 0) {
+                successesColor = ChatColor.RED;
+            } else {
+                successesColor = ChatColor.GOLD;
+            }
+            ChatColor errorColor = errors == 0 ? ChatColor.GREEN : ChatColor.RED;
+            ChatColor ignoredColor = ChatColor.AQUA;
+            ChatColor remainingColor = remaining == 0 ? ChatColor.GREEN : ChatColor.AQUA;
+            return String.format(
+                    "Success: %s%s%s Already linked: %s%s%s Errors: %s%s%s Not processed: %s%s%s",
+                    successesColor, successes, ChatColor.RESET,
+                    ignoredColor, ignored, ChatColor.RESET,
+                    errorColor, errors, ChatColor.RESET,
+                    remainingColor, remaining, ChatColor.RESET);
+        }
+
+        public void addFuture(CompletableFuture<?> future) {
+            synchronized (this.futures) {
+                this.futures.add(future);
+            }
+        }
+
+        public void cancel() {
+            synchronized (this.futures) {
+                for (CompletableFuture<?> future: this.futures) {
+                    future.cancel(true);
+                    try {
+                        future.get();
+                    } catch (Exception ignored) {
+                        // Wait for termination
+                    }
+                }
+            }
+            this.finish(ChatColor.RED + "ABORTED" + ChatColor.RESET);
+        }
+
+        public void subscribeSender(CommandSender sender) {
+            synchronized(this.senders) {
+                this.senders.add(sender);
+            }
+        }
+
+        public void unsubscribeSender(CommandSender sender) {
+            synchronized(this.senders) {
+                this.senders.remove(sender);
+            }
+        }
+
     }
 
 }

@@ -79,7 +79,6 @@ public class SchematicSynchronizationServiceTest {
                 this.nominatim,
                 this.logger);
         this.service.setBulkMessageDelay(10);
-        this.service.setup();
         this.service.start();
     }
 
@@ -113,7 +112,7 @@ public class SchematicSynchronizationServiceTest {
             this.createFakeSchematic("schemNumber" + i, 1024);
         }
         lock.lock();
-        this.service.processExistingSchematics(new DummyBukkitPlayer(UUID.randomUUID(), "DummyPlayer", this.logger));
+        this.service.startBulkUpdate(new DummyBukkitPlayer(UUID.randomUUID(), "DummyPlayer", this.logger));
         for (int i = 0; i < schemCount; i++) {
             TestMessageEmbed embed = (TestMessageEmbed) this.channel.waitForNextEmbed();
             embed.assertNoMcPlayer();

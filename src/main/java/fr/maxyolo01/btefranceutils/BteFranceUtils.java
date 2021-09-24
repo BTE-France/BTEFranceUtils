@@ -3,7 +3,7 @@ package fr.maxyolo01.btefranceutils;
 import java.io.File;
 import java.io.IOException;
 
-import fr.maxyolo01.btefranceutils.commands.SyncSchematicsCommand;
+import fr.maxyolo01.btefranceutils.commands.schematicsync.SyncSchematicsCommand;
 import fr.maxyolo01.btefranceutils.listeners.JoinEventListener;
 import fr.maxyolo01.btefranceutils.sync.SchematicSyncConfig;
 import fr.maxyolo01.btefranceutils.sync.SchematicSynchronizationService;
@@ -48,7 +48,6 @@ public class BteFranceUtils extends JavaPlugin {
 		SchematicSyncConfig syncConfig = new SchematicSyncConfig(this.config.getConfigurationSection("schematicSync"), this.getLogger());
 		try {
 			this.schematicSyncService = syncConfig.makeService();
-			this.schematicSyncService.setup();
 			this.schematicSyncService.start();
 		} catch (SchematicSyncConfig.InvalidSchematicSyncConfigException e) {
 			this.getLogger().severe("Configuration problem for the schematic synchronization service: " + e.getMessage());

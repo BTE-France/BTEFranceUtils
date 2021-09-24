@@ -23,8 +23,8 @@ schematicSync:
     title: "New schematic!"
     description:
       patterns:
-      - "{userName} saved a new schematic as {fileName} in {city}!"
-      - "{userName} saved a new schematic as {fileName}!"
+      - "{playerName} saved a new schematic as {fileName} in {city}!"
+      - "{playerName} saved a new schematic as {fileName}!"
       - "A schematic has been saved as {fileName}!"
       required: true
     fields:
