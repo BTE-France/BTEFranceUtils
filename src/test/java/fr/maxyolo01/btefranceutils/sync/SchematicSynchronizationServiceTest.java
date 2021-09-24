@@ -95,8 +95,8 @@ public class SchematicSynchronizationServiceTest {
         this.service.onSchematicSaved(event);
         TestMessageEmbed embed = (TestMessageEmbed) this.channel.waitForNextEmbed();
         lock.unlock();
-        assertTrue(this.wedDirectory.toPath().resolve("41d82e57322fcb2adc80111ccfc50bc7e6a82d32eb9740bb4dd758248ff3ae52/schem.schematic").toFile().exists());
-        embed.assertUrl("https://example.com/schematics/41d82e57322fcb2adc80111ccfc50bc7e6a82d32eb9740bb4dd758248ff3ae52/schem.schematic");
+        assertTrue(this.wedDirectory.toPath().resolve("41d82e57322fcb2adc80/schem.schematic").toFile().exists());
+        embed.assertUrl("https://example.com/schematics/41d82e57322fcb2adc80/schem.schematic");
         embed.assertFileName("schem.schematic");
         embed.assertMcPlayer("DummyPlayer");
         embed.assertDiscordId("DummyPlayer#4567");

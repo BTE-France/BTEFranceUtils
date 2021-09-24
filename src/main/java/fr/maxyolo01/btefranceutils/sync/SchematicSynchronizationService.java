@@ -276,7 +276,7 @@ public class SchematicSynchronizationService {
     private File getWebSubDirectory(File file) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
-            String prefix = bytesToHexString(md.digest((this.salt + file.getName()).getBytes(StandardCharsets.UTF_8)));
+            String prefix = bytesToHexString(md.digest((this.salt + file.getName()).getBytes(StandardCharsets.UTF_8))).substring(0, 20);
             return this.webDirectory.resolve(prefix).toFile();
         } catch(NoSuchAlgorithmException e) {
             this.logger.severe("How on Earth is SHA-256 not supported??");
