@@ -44,7 +44,7 @@ public class BteFranceUtils extends JavaPlugin {
 	}
 
 	@github.scarsz.discordsrv.api.Subscribe
-	public void discordReadyEvent(DiscordReadyEvent event) {
+	public void onDiscordReady(DiscordReadyEvent event) {
 		SchematicSyncConfig syncConfig = new SchematicSyncConfig(this.config.getConfigurationSection("schematicSync"), this.getLogger());
 		try {
 			this.schematicSyncService = syncConfig.makeService();
@@ -70,6 +70,16 @@ public class BteFranceUtils extends JavaPlugin {
 			}
 		}
 		this.getServer().getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&8[&dBTEFranceUtils&8] &ehas been &4disabled&e!"));
+	}
+
+	public void reload() throws InterruptedException {
+		if (this.schematicSyncService != null) {
+			SchematicSynchronizationService.BulkUpdateTask task = this.schematicSyncService.getBulkUpdateTask();
+			if (task != null) task.cancel();
+			this.schematicSyncService.stop();
+		}
+		this.loadConfig();
+		this.onDiscordReady(null); // Re-create the schematic service
 	}
 	
 	public void loadConfig() {
