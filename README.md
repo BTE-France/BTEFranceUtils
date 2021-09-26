@@ -5,7 +5,7 @@ Some of these features are closely linked to the rest of our server setup and wi
 
 ## Features
 - Customizable public and private welcome messages to great users
-- Banroulette: a 21th century solution to staff boredom
+- Banroulette: a 21st century solution to staff boredom
 - Minecraft to Discord schematic synchronization
 
 ## Plugins and Mods Dependencies
