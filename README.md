@@ -4,7 +4,7 @@ This plugin implements a few features that either did not have any existing impl
 Some of these features are closely linked to the rest of our server setup and will not work as drop in solution. As such, no compiled binary is provided. 
 
 ## Features
-- Customizable public and private welcome messages to great users
+- Customizable public and private welcome messages to greet users
 - Banroulette: a 21st century solution to staff boredom
 - Minecraft to Discord schematic synchronization
 
