@@ -1,13 +1,13 @@
 name: BTEFranceUtils
-author: mAxYoLo01
+author: BTEFrance
 version: ${version}
-main: fr.maxyolo01.btefranceutils.BteFranceUtils
+api-version: "1.21"
+main: fr.btefrance.btefranceutils.BTEFranceUtils
 description: BTE France custom plugin
-depend: [WorldEdit, DiscordSRV]
 commands:
-    btefrance:
-        description: BTE France command
-    banroulette:
-        description: Ban roulette with currently connected players
-    syncschems:
-        description: Synchronize already existing schematics with Discord
+  rules:
+    description: Accept/deny the server rules
+  promote:
+    description: Promote a user to a certain rank
+  demote:
+    description: Demote a user to a certain rank
